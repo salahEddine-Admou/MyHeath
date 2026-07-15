@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+*.log
+.DS_Store
+coverage/
+.vite/
+mongo_data/
+.vercel

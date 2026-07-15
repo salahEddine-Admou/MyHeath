@@ -1,0 +1,9 @@
+{
+  "name": "heracare-backend",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "buildCommand": "npm install",
+  "startCommand": "node src/server.js",
+  "healthCheckPath": "/api/healthcheck"
+}
