@@ -14,7 +14,7 @@ function initSocket(io) {
 
       const decoded = jwt.verify(
         token,
-        process.env.JWT_SECRET || 'heracare_jwt_secret'
+        process.env.JWT_SECRET || 'myheath_jwt_secret'
       );
       const user = await User.findById(decoded.id);
       if (!user) return next(new Error('User not found'));

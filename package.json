@@ -1,8 +1,8 @@
 {
-  "name": "heracare",
+  "name": "myheath",
   "version": "1.0.0",
   "private": true,
-  "description": "HeraCare — Télémédecine & suivi de santé féminine (PFE MERN)",
+  "description": "MyHeath — Telemedicine & women's health tracking (PFE MERN)",
   "scripts": {
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",

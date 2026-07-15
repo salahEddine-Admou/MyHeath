@@ -2,10 +2,11 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
+const TOKEN_KEY = 'myheath_token';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('heracare_token'));
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export function AuthProvider({ children }) {
         const { data } = await api.get('/auth/me');
         setUser(data.user);
       } catch {
-        localStorage.removeItem('heracare_token');
+        localStorage.removeItem(TOKEN_KEY);
         setToken(null);
         setUser(null);
       } finally {
@@ -30,7 +31,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('heracare_token', data.token);
+    localStorage.setItem(TOKEN_KEY, data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user;
@@ -38,14 +39,14 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const { data } = await api.post('/auth/register', payload);
-    localStorage.setItem('heracare_token', data.token);
+    localStorage.setItem(TOKEN_KEY, data.token);
     setToken(data.token);
     setUser(data.user);
     return data.user;
   };
 
   const logout = () => {
-    localStorage.removeItem('heracare_token');
+    localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
   };

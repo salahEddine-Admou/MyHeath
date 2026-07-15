@@ -40,25 +40,25 @@ export default function HealthRecord() {
         medications: form.medications.split(',').map((s) => s.trim()).filter(Boolean),
         clinicalNotes: form.clinicalNotes,
       });
-      setMsg('Dossier mis à jour (données chiffrées AES-256 au repos).');
+      setMsg('Record updated (sensitive fields encrypted AES-256 at rest).');
     } catch {
-      setMsg('Erreur de sauvegarde.');
+      setMsg('Save failed.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p className="text-ink-500">Chargement du dossier…</p>;
+  if (loading) return <p className="text-ink-500">Loading record…</p>;
 
   return (
     <div className="max-w-2xl">
       <div className="flex items-start gap-3 mb-6">
         <Shield className="w-6 h-6 text-rose-600 shrink-0 mt-1" />
         <div>
-          <h1 className="font-display text-3xl text-ink-900">Dossier médical</h1>
+          <h1 className="font-display text-3xl text-ink-900">Health record</h1>
           <p className="text-ink-500 text-sm mt-1">
-            Les champs sensibles (allergies, traitements, notes) sont chiffrés
-            AES-256-CBC avant stockage MongoDB — conformité Loi 09-08.
+            Sensitive fields (allergies, medications, notes) are encrypted with AES-256-CBC before
+            MongoDB storage.
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function HealthRecord() {
         className="bg-white/70 border border-rose-100 rounded-2xl p-6 space-y-4"
       >
         <div>
-          <label className="text-sm text-ink-700">Groupe sanguin</label>
+          <label className="text-sm text-ink-700">Blood type</label>
           <input
             value={form.bloodType}
             onChange={(e) => setForm((f) => ({ ...f, bloodType: e.target.value }))}
@@ -77,7 +77,7 @@ export default function HealthRecord() {
           />
         </div>
         <div>
-          <label className="text-sm text-ink-700">Allergies (séparées par des virgules)</label>
+          <label className="text-sm text-ink-700">Allergies (comma-separated)</label>
           <input
             value={form.allergies}
             onChange={(e) => setForm((f) => ({ ...f, allergies: e.target.value }))}
@@ -85,7 +85,7 @@ export default function HealthRecord() {
           />
         </div>
         <div>
-          <label className="text-sm text-ink-700">Médicaments</label>
+          <label className="text-sm text-ink-700">Medications</label>
           <input
             value={form.medications}
             onChange={(e) => setForm((f) => ({ ...f, medications: e.target.value }))}
@@ -93,7 +93,7 @@ export default function HealthRecord() {
           />
         </div>
         <div>
-          <label className="text-sm text-ink-700">Notes cliniques</label>
+          <label className="text-sm text-ink-700">Clinical notes</label>
           <textarea
             value={form.clinicalNotes}
             onChange={(e) => setForm((f) => ({ ...f, clinicalNotes: e.target.value }))}
@@ -105,7 +105,7 @@ export default function HealthRecord() {
           disabled={saving}
           className="bg-rose-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-rose-700 disabled:opacity-60"
         >
-          {saving ? 'Chiffrement & sauvegarde…' : 'Enregistrer'}
+          {saving ? 'Encrypting & saving…' : 'Save'}
         </button>
         {msg && <p className="text-sm text-ink-500">{msg}</p>}
       </form>

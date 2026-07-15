@@ -17,36 +17,33 @@ async function seed() {
   const doctor = await User.create({
     firstName: 'Amina',
     lastName: 'Benali',
-    email: 'docteur@heracare.ma',
+    email: 'doctor@myheath.app',
     password: 'Doctor123',
     role: 'doctor',
-    specialty: 'Gynécologie-Obstétrique',
+    specialty: 'Gynecology & Obstetrics',
   });
 
   const patient = await User.create({
     firstName: 'Sara',
     lastName: 'Alaoui',
-    email: 'patiente@heracare.ma',
+    email: 'patient@myheath.app',
     password: 'Patient123',
     role: 'patient',
     assignedDoctor: doctor._id,
     dateOfBirth: new Date('1995-04-12'),
   });
 
-  await HealthRecord.create({
-    patient: patient._id,
-  });
+  await HealthRecord.create({ patient: patient._id });
 
   const record = await HealthRecord.findOne({ patient: patient._id });
   record.bloodType = 'A+';
   record.setSensitiveFields({
-    allergies: ['Pénicilline'],
-    medications: ['Aucun'],
-    clinicalNotes: 'Suivi cycle menstruel — première consultation HeraCare.',
+    allergies: ['Penicillin'],
+    medications: ['None'],
+    clinicalNotes: 'Cycle tracking — first MyHeath consultation.',
   });
   await record.save();
 
-  // Historique de cycles (irréguliers pour démontrer les alertes)
   const starts = [
     '2025-11-01',
     '2025-12-05',
@@ -63,7 +60,7 @@ async function seed() {
       date: new Date(d),
       entryType: 'period_start',
       flow: 'medium',
-      symptoms: ['crampes'],
+      symptoms: ['cramps'],
       painLevel: 5,
     });
   }
@@ -72,7 +69,7 @@ async function seed() {
     patient: patient._id,
     date: new Date('2026-06-20'),
     entryType: 'symptom',
-    symptoms: ['acné', 'fatigue', 'douleur pelvienne'],
+    symptoms: ['acne', 'fatigue', 'pelvic pain'],
     painLevel: 8,
     mood: 'low',
   });
@@ -80,7 +77,7 @@ async function seed() {
     patient: patient._id,
     date: new Date('2026-07-01'),
     entryType: 'symptom',
-    symptoms: ['douleur pelvienne', 'hirsutisme'],
+    symptoms: ['pelvic pain', 'hirsutism'],
     painLevel: 9,
     mood: 'bad',
   });
@@ -88,14 +85,14 @@ async function seed() {
     patient: patient._id,
     date: new Date('2026-07-10'),
     entryType: 'symptom',
-    symptoms: ['prise de poids', 'acné'],
+    symptoms: ['weight gain', 'acne'],
     painLevel: 7,
     mood: 'ok',
   });
 
   console.log('Seed OK');
-  console.log('Médecin  : docteur@heracare.ma / Doctor123');
-  console.log('Patiente : patiente@heracare.ma / Patient123');
+  console.log('Doctor  : doctor@myheath.app / Doctor123');
+  console.log('Patient : patient@myheath.app / Patient123');
   await mongoose.disconnect();
 }
 

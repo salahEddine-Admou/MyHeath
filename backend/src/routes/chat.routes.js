@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(protect);
 router.get('/partners', chatController.getPartners);
+router.post('/send', chatController.sendMessage);
 router.get('/:partnerId', chatController.getConversation);
 
 module.exports = router;

@@ -14,7 +14,7 @@ function PrivateRoute({ children, roles }) {
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-sand-50 text-ink-500">
-        Chargement…
+        Loading…
       </div>
     );
   }

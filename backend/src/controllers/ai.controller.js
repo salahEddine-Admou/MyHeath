@@ -22,7 +22,7 @@ async function buildPatientContext(user) {
       };
     }
   } catch {
-    /* ignore decrypt errors for context */
+    /* ignore */
   }
 
   const recent = logs
@@ -38,10 +38,7 @@ async function buildPatientContext(user) {
     }));
 
   return {
-    patient: {
-      firstName: user.firstName,
-      role: user.role,
-    },
+    patient: { firstName: user.firstName, role: user.role },
     insights,
     recordSummary,
     recentLogs: recent,
@@ -53,13 +50,13 @@ exports.chat = async (req, res) => {
   try {
     const { message, history = [] } = req.body;
     if (!message?.trim()) {
-      return res.status(400).json({ message: 'Message requis' });
+      return res.status(400).json({ message: 'Message is required' });
     }
 
     const ctx = await buildPatientContext(req.user);
     const system = `${SYSTEM_BASE}
 
-Contexte clinique confidentiel de la patiente (utilise-le pour personnaliser, ne le récite pas en entier) :
+Confidential patient context (personalize answers; do not dump raw JSON):
 ${JSON.stringify(ctx, null, 2)}`;
 
     const messages = [
@@ -75,12 +72,11 @@ ${JSON.stringify(ctx, null, 2)}`;
       reply: text,
       model,
       usage,
-      disclaimer:
-        'Hera AI fournit des informations générales. Ce n’est pas un avis médical.',
+      disclaimer: 'MyHeath AI provides general information only. This is not medical advice.',
     });
   } catch (error) {
     console.error('ai.chat:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };
 
@@ -92,17 +88,17 @@ exports.explainInsights = async (req, res) => {
       messages: [
         {
           role: 'user',
-          content: `Rédige une explication personnalisée, claire et bienveillante (FR) des insights de cycle ci-dessous pour ${ctx.patient.firstName}.
-Structure :
-1) Résumé en 2 phrases
-2) Ce que dit ton cycle en ce moment
-3) Alertes éventuelles (sans dramatiser, sans diagnostic)
-4) 3 actions concrètes cette semaine
-5) Quand consulter
+          content: `Write a personalized, clear, reassuring English explanation of these cycle insights for ${ctx.patient.firstName}.
+Structure:
+1) 2-sentence summary
+2) What the cycle looks like right now
+3) Any alerts (no drama, no diagnosis)
+4) 3 concrete actions this week
+5) When to see a clinician
 
-Données :
+Data:
 ${JSON.stringify(ctx.insights, null, 2)}
-Logs récents :
+Recent logs:
 ${JSON.stringify(ctx.recentLogs, null, 2)}`,
         },
       ],
@@ -111,7 +107,7 @@ ${JSON.stringify(ctx.recentLogs, null, 2)}`,
     res.json({ explanation: text, insights: ctx.insights, model });
   } catch (error) {
     console.error('ai.explainInsights:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };
 
@@ -119,16 +115,16 @@ exports.parseSymptoms = async (req, res) => {
   try {
     const { text } = req.body;
     if (!text?.trim()) {
-      return res.status(400).json({ message: 'Texte requis' });
+      return res.status(400).json({ message: 'Text is required' });
     }
 
     const { text: raw } = await callClaude({
       system: `${SYSTEM_BASE}
-Tu extrais un journal de symptômes structuré. Réponds UNIQUEMENT en JSON valide.`,
+Extract a structured symptom journal entry. Reply with VALID JSON only.`,
       messages: [
         {
           role: 'user',
-          content: `Convertis ce texte libre en JSON avec exactement ces clés :
+          content: `Convert this free text into JSON with exactly these keys:
 {
   "entryType": "symptom" | "period_start" | "period_end" | "note",
   "symptoms": string[],
@@ -136,12 +132,12 @@ Tu extrais un journal de symptômes structuré. Réponds UNIQUEMENT en JSON vali
   "mood": "great"|"good"|"ok"|"low"|"bad"|"",
   "flow": "none"|"light"|"medium"|"heavy"|"",
   "notes": string,
-  "aiSummary": string (1 phrase FR),
+  "aiSummary": string (1 English sentence),
   "urgency": "low"|"medium"|"high",
   "suggestedActions": string[]
 }
 
-Texte patiente : """${text.trim().slice(0, 2000)}"""`,
+Patient text: """${text.trim().slice(0, 2000)}"""`,
         },
       ],
       maxTokens: 800,
@@ -152,7 +148,7 @@ Texte patiente : """${text.trim().slice(0, 2000)}"""`,
     res.json({ parsed, raw });
   } catch (error) {
     console.error('ai.parseSymptoms:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };
 
@@ -164,17 +160,17 @@ exports.doctorBrief = async (req, res) => {
       messages: [
         {
           role: 'user',
-          content: `Génère un BRIEF MÉDICAL structuré (FR) que la patiente peut partager avec son médecin sur HeraCare.
-Format markdown :
-# Brief HeraCare
-## Motif
-## Historique de cycle (faits)
-## Symptômes marquants
-## Signaux d'alerte algorithmiques
-## Questions suggérées pour la consultation
-## Note : ce brief est généré par IA, à valider par la patiente
+          content: `Generate a structured MEDICAL BRIEF (English) the patient can share with their doctor on MyHeath.
+Markdown format:
+# MyHeath Brief
+## Reason for visit
+## Cycle history (facts)
+## Notable symptoms
+## Algorithmic alert signals
+## Suggested consultation questions
+## Note: AI-generated — patient should review before sharing
 
-Données :
+Data:
 ${JSON.stringify(ctx, null, 2)}`,
         },
       ],
@@ -183,7 +179,7 @@ ${JSON.stringify(ctx, null, 2)}`,
     res.json({ brief: text, model });
   } catch (error) {
     console.error('ai.doctorBrief:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };
 
@@ -192,12 +188,12 @@ exports.wellnessPlan = async (req, res) => {
     const ctx = await buildPatientContext(req.user);
     const { text: raw } = await callClaude({
       system: `${SYSTEM_BASE}
-Réponds UNIQUEMENT en JSON valide.`,
+Reply with VALID JSON only.`,
       messages: [
         {
           role: 'user',
-          content: `Crée un plan bien-être personnalisé pour aujourd'hui selon la phase du cycle.
-JSON exact :
+          content: `Create a personalized wellness plan for today based on cycle phase.
+Exact JSON:
 {
   "phase": string,
   "headline": string,
@@ -209,7 +205,7 @@ JSON exact :
   "affirmation": string
 }
 
-Contexte :
+Context:
 ${JSON.stringify({ insights: ctx.insights, recent: ctx.recentLogs }, null, 2)}`,
         },
       ],
@@ -221,22 +217,22 @@ ${JSON.stringify({ insights: ctx.insights, recent: ctx.recentLogs }, null, 2)}`,
     res.json({ plan });
   } catch (error) {
     console.error('ai.wellnessPlan:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };
 
 exports.askDoctor = async (req, res) => {
   try {
     const ctx = await buildPatientContext(req.user);
-    const concern = req.body.concern || 'suivi gynécologique général';
+    const concern = req.body.concern || 'general gynecological follow-up';
     const { text: raw } = await callClaude({
       system: `${SYSTEM_BASE}
-Réponds UNIQUEMENT en JSON valide.`,
+Reply with VALID JSON only.`,
       messages: [
         {
           role: 'user',
-          content: `Génère des questions intelligentes pour préparer une consultation.
-JSON :
+          content: `Generate smart questions to prepare for a consultation.
+JSON:
 {
   "title": string,
   "questions": [{"q": string, "why": string}],
@@ -244,9 +240,9 @@ JSON :
   "documentsToBring": string[]
 }
 
-Préoccupation : ${concern}
-Contexte : ${JSON.stringify(ctx.insights)}
-Récents : ${JSON.stringify(ctx.recentLogs)}`,
+Concern: ${concern}
+Context: ${JSON.stringify(ctx.insights)}
+Recent: ${JSON.stringify(ctx.recentLogs)}`,
         },
       ],
       maxTokens: 1000,
@@ -255,6 +251,6 @@ Récents : ${JSON.stringify(ctx.recentLogs)}`,
     res.json({ prep: extractJson(raw) });
   } catch (error) {
     console.error('ai.askDoctor:', error.message);
-    res.status(error.status || 500).json({ message: error.message || 'Erreur IA' });
+    res.status(error.status || 500).json({ message: error.message || 'AI error' });
   }
 };

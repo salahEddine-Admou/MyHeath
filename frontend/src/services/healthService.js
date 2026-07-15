@@ -10,3 +10,5 @@ export const assignDoctor = (doctorId) =>
   api.post('/auth/assign-doctor', { doctorId });
 export const getChatPartners = () => api.get('/chat/partners');
 export const getConversation = (partnerId) => api.get(`/chat/${partnerId}`);
+export const sendChatMessage = (receiverId, content) =>
+  api.post('/chat/send', { receiverId, content });

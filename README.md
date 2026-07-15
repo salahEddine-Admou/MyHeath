@@ -1,102 +1,48 @@
-# HeraCare
+# MyHeath
 
-Plateforme intelligente de **télémédecine & suivi de santé féminine** (FemTech) — projet PFE ingénieur, stack **MERN**.
+Intelligent **telemedicine & women's health tracking** platform (FemTech) — engineering thesis (PFE), **MERN** stack.
 
-## Fonctionnalités
+## Features
 
-- Authentification JWT + RBAC (Patiente / Médecin / Admin)
-- Suivi de cycle & symptômes avec **algorithme prédictif** (prochaines règles, ovulation, alertes SOPK / endométriose)
-- **Hera AI (Claude)** : chat santé, journal en langage naturel, explication d’insights, brief médecin, plan bien-être, questions de consult
-- Dossier médical & messages **chiffrés AES-256-CBC** au repos
-- Chat temps réel **Socket.io** Patient ↔ Médecin
-- Conteneurisation **Docker Compose**
+- JWT auth + RBAC (Patient / Doctor / Admin)
+- Predictive cycle & symptom tracking (period forecast, ovulation, PCOS / endometriosis alerts)
+- **MyHeath AI (Claude)**: health chat, NL journal, insight narration, doctor brief, wellness plan
+- Medical records & messages **AES-256-CBC encrypted** at rest
+- Secure consult messaging (REST; Socket.io locally)
+- Docker Compose + Vercel deploy (frontend + API)
 
 ## Structure
 
 ```
-HeraCare/
-├── backend/          # Node.js + Express + MongoDB + Socket.io
-├── frontend/         # React + Vite + Tailwind + Recharts
-├── docs/             # Rapport PFE (extraits techniques)
-├── docker-compose.yml
-└── vercel.json       # Déploiement frontend Vercel
+MyHeath/
+├── backend/     # Node.js + Express + MongoDB (+ optional Socket.io locally)
+├── frontend/    # React + Vite + Tailwind + Recharts
+├── docs/        # Thesis PDF / PPT
+└── docker-compose.yml
 ```
 
-## Démarrage local
-
-### Prérequis
-- Node.js 20+
-- MongoDB local **ou** Docker
-
-### 1. Backend
+## Local setup
 
 ```bash
-cd backend
-cp .env.example .env
-npm install
-npm run seed    # comptes démo
-npm run dev     # http://localhost:5000
+cd backend && cp .env.example .env && npm install && npm run seed && npm run dev
+cd frontend && cp .env.example .env && npm install && npm run dev
 ```
 
-### 2. Frontend
+### Demo accounts
 
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev     # http://localhost:5173
-```
+| Role    | Email               | Password   |
+|---------|---------------------|------------|
+| Patient | patient@myheath.app | Patient123 |
+| Doctor  | doctor@myheath.app  | Doctor123  |
 
-### Comptes démo
+## Deploy (Vercel)
 
-| Rôle     | Email                  | Mot de passe |
-|----------|------------------------|--------------|
-| Patiente | patiente@heracare.ma   | Patient123   |
-| Médecin  | docteur@heracare.ma    | Doctor123    |
+- Frontend: Root Directory `frontend`
+- Backend API: Root Directory `backend` (serverless Express via `api/index.js`)
 
-### Docker
+Env (backend): `MONGODB_URI`, `JWT_SECRET`, `AES_SECRET_KEY`, `ANTHROPIC_API_KEY`, `CLIENT_URL`  
+Env (frontend): `VITE_API_URL`, `VITE_SOCKET_URL`
 
-```bash
-docker compose up --build
-```
+## License
 
-## Déploiement Vercel (frontend)
-
-Le frontend se déploie sur **Vercel**. L’API (Socket.io) doit être hébergée séparément (Render, Railway, Fly.io, etc.).
-
-1. Poussez le repo sur GitHub
-2. Importez le projet sur [vercel.com](https://vercel.com) — **Root Directory** : `frontend`
-3. Variables d’environnement Vercel :
-   - `VITE_API_URL` = `https://VOTRE-API.onrender.com/api`
-   - `VITE_SOCKET_URL` = `https://VOTRE-API.onrender.com`
-4. Sur le backend (Render/Railway), définissez :
-   - `MONGODB_URI` (MongoDB Atlas)
-   - `JWT_SECRET`, `AES_SECRET_KEY`
-   - `CLIENT_URL` = URL Vercel (ex. `https://heracare.vercel.app`)
-
-```bash
-cd frontend
-npx vercel --prod
-```
-
-## API principale
-
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| POST | `/api/auth/register` | Inscription |
-| POST | `/api/auth/login` | Connexion |
-| GET | `/api/health/insights` | Analyse prédictive du cycle |
-| POST | `/api/health/symptoms` | Journaliser un symptôme |
-| GET/PUT | `/api/health/record` | Dossier médical chiffré |
-| GET | `/api/chat/:partnerId` | Historique conversation |
-
-## Sécurité
-
-- Mots de passe : bcrypt (cost 12)
-- Sessions : JWT Bearer
-- Données sensibles : AES-256-CBC (`backend/src/utils/crypto.js`)
-- Accès : middleware `protect` + `authorize`
-
-## Licence
-
-Projet académique PFE — usage éducatif.
+Academic / educational use.

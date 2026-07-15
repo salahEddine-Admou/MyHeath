@@ -30,7 +30,7 @@ exports.logSymptom = async (req, res) => {
     res.status(201).json({ log });
   } catch (error) {
     console.error('logSymptom:', error);
-    res.status(500).json({ message: 'Erreur enregistrement symptôme' });
+    res.status(500).json({ message: 'Failed to save symptom log' });
   }
 };
 
@@ -41,7 +41,7 @@ exports.getHistory = async (req, res) => {
       .limit(200);
     res.json({ logs });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur récupération historique' });
+    res.status(500).json({ message: 'Failed to load history' });
   }
 };
 
@@ -52,7 +52,6 @@ exports.getInsights = async (req, res) => {
         ? req.query.patientId
         : req.user._id;
 
-    // Seul le patient lui-même, son médecin assigné, ou un admin
     if (
       req.user.role === 'doctor' &&
       String(patientId) !== String(req.user._id)
@@ -60,7 +59,7 @@ exports.getInsights = async (req, res) => {
       const User = require('../models/User');
       const patient = await User.findById(patientId);
       if (!patient || String(patient.assignedDoctor) !== String(req.user._id)) {
-        return res.status(403).json({ message: 'Accès dossier non autorisé' });
+        return res.status(403).json({ message: 'Access to this record is denied' });
       }
     }
 
@@ -74,7 +73,7 @@ exports.getInsights = async (req, res) => {
     res.json({ insights, logsCount: logs.length });
   } catch (error) {
     console.error('getInsights:', error);
-    res.status(500).json({ message: 'Erreur analyse cycle' });
+    res.status(500).json({ message: 'Failed to analyze cycle' });
   }
 };
 
@@ -86,7 +85,7 @@ exports.getHealthRecord = async (req, res) => {
     }
     res.json({ record: record.getDecrypted() });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur dossier médical' });
+    res.status(500).json({ message: 'Failed to load health record' });
   }
 };
 
@@ -106,6 +105,6 @@ exports.updateHealthRecord = async (req, res) => {
     res.json({ record: record.getDecrypted() });
   } catch (error) {
     console.error('updateHealthRecord:', error);
-    res.status(500).json({ message: 'Erreur mise à jour dossier' });
+    res.status(500).json({ message: 'Failed to update health record' });
   }
 };

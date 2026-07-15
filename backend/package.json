@@ -1,7 +1,7 @@
 {
-  "name": "heracare-backend",
+  "name": "myheath-backend",
   "version": "1.0.0",
-  "description": "HeraCare - Plateforme intelligente de télémédecine & suivi de santé féminine",
+  "description": "MyHeath - Intelligent telemedicine & women's health platform",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

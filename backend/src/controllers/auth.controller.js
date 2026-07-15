@@ -4,7 +4,7 @@ const User = require('../models/User');
 const HealthRecord = require('../models/HealthRecord');
 
 const signToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET || 'heracare_jwt_secret', {
+  jwt.sign({ id: userId }, process.env.JWT_SECRET || 'myheath_jwt_secret', {
     expiresIn: '7d',
   });
 
@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
 
     const exists = await User.findOne({ email: email.toLowerCase() });
     if (exists) {
-      return res.status(409).json({ message: 'Cet email est déjà utilisé' });
+      return res.status(409).json({ message: 'This email is already registered' });
     }
 
     const allowedRoles = ['patient', 'doctor'];
@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
       password,
       role: safeRole,
       phone: phone || '',
-      specialty: safeRole === 'doctor' ? specialty || 'Gynécologie' : '',
+      specialty: safeRole === 'doctor' ? specialty || 'Gynecology' : '',
     });
 
     if (user.role === 'patient') {
@@ -43,7 +43,7 @@ exports.register = async (req, res) => {
     res.status(201).json({ token, user: user.toSafeJSON() });
   } catch (error) {
     console.error('register error:', error);
-    res.status(500).json({ message: 'Erreur lors de l’inscription' });
+    res.status(500).json({ message: 'Registration failed' });
   }
 };
 
@@ -51,19 +51,19 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email et mot de passe requis' });
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Identifiants incorrects' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = signToken(user._id);
     res.json({ token, user: user.toSafeJSON() });
   } catch (error) {
     console.error('login error:', error);
-    res.status(500).json({ message: 'Erreur lors de la connexion' });
+    res.status(500).json({ message: 'Login failed' });
   }
 };
 
@@ -78,7 +78,7 @@ exports.listDoctors = async (_req, res) => {
     );
     res.json({ doctors });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur récupération médecins' });
+    res.status(500).json({ message: 'Failed to load doctors' });
   }
 };
 
@@ -87,13 +87,13 @@ exports.assignDoctor = async (req, res) => {
     const { doctorId } = req.body;
     const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
     if (!doctor) {
-      return res.status(404).json({ message: 'Médecin introuvable' });
+      return res.status(404).json({ message: 'Doctor not found' });
     }
 
     req.user.assignedDoctor = doctor._id;
     await req.user.save();
     res.json({ user: req.user.toSafeJSON() });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur assignation médecin' });
+    res.status(500).json({ message: 'Failed to assign doctor' });
   }
 };

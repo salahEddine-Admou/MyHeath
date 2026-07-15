@@ -1,76 +1,65 @@
 import { useEffect, useRef, useState } from 'react';
-import { Lock, Wifi, WifiOff, Send } from 'lucide-react';
+import { Lock, RefreshCw, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../hooks/useSocket';
-import { getChatPartners, getConversation } from '../services/healthService';
+import {
+  getChatPartners,
+  getConversation,
+  sendChatMessage,
+} from '../services/healthService';
 
 export default function Chat() {
-  const { user, token } = useAuth();
-  const { socket, connected } = useSocket(token);
+  const { user } = useAuth();
   const [partners, setPartners] = useState([]);
   const [active, setActive] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
 
+  const loadPartners = async () => {
+    const { data } = await getChatPartners();
+    setPartners(data.partners || []);
+    if (data.partners?.[0] && !active) setActive(data.partners[0]);
+  };
+
+  const loadMessages = async (partnerId) => {
+    if (!partnerId) return;
+    const { data } = await getConversation(partnerId);
+    setMessages(data.messages || []);
+  };
+
   useEffect(() => {
-    getChatPartners().then(({ data }) => {
-      setPartners(data.partners || []);
-      if (data.partners?.[0]) setActive(data.partners[0]);
-    });
+    loadPartners().catch(console.error);
   }, []);
 
   useEffect(() => {
-    if (!active) return;
-    getConversation(active._id).then(({ data }) => {
-      setMessages(data.messages || []);
-    });
-    socket.current?.emit('join_conversation', { partnerId: active._id });
+    if (!active?._id) return undefined;
+    loadMessages(active._id).catch(console.error);
+    const id = setInterval(() => loadMessages(active._id).catch(() => {}), 4000);
+    return () => clearInterval(id);
   }, [active?._id]);
-
-  useEffect(() => {
-    const s = socket.current;
-    if (!s) return undefined;
-
-    const onMsg = (msg) => {
-      if (
-        active &&
-        (String(msg.sender) === String(active._id) ||
-          String(msg.receiver) === String(active._id) ||
-          String(msg.sender) === String(user.id) ||
-          String(msg.receiver) === String(user.id))
-      ) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      }
-    };
-
-    s.on('private_message', onMsg);
-    return () => s.off('private_message', onMsg);
-  }, [active?._id, user?.id, connected]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const send = () => {
-    if (!text.trim() || !active || !socket.current) return;
+  const send = async () => {
+    if (!text.trim() || !active || sending) return;
     const content = text.trim();
     setText('');
-    socket.current.emit(
-      'private_message',
-      { receiverId: active._id, content },
-      (ack) => {
-        if (ack?.ok && ack.message) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === ack.message.id)) return prev;
-            return [...prev, ack.message];
-          });
-        }
-      }
-    );
+    setSending(true);
+    try {
+      const { data } = await sendChatMessage(active._id, content);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === data.message.id)) return prev;
+        return [...prev, data.message];
+      });
+    } catch (e) {
+      console.error(e);
+      setText(content);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -80,8 +69,8 @@ export default function Chat() {
         {partners.length === 0 ? (
           <p className="text-sm text-ink-500">
             {user?.role === 'patient'
-              ? 'Assignez un médecin depuis le tableau de bord.'
-              : 'Aucune patiente assignée pour le moment.'}
+              ? 'Assign a doctor from the dashboard first.'
+              : 'No assigned patients yet.'}
           </p>
         ) : (
           partners.map((p) => (
@@ -110,23 +99,20 @@ export default function Chat() {
             <p className="font-medium text-ink-900">
               {active
                 ? `${active.role === 'doctor' ? 'Dr. ' : ''}${active.firstName} ${active.lastName}`
-                : 'Sélectionnez un contact'}
+                : 'Select a contact'}
             </p>
             <p className="text-xs text-ink-500 flex items-center gap-1 mt-0.5">
               <Lock className="w-3 h-3 text-emerald-600" />
-              Canal chiffré AES-256 (au repos)
+              AES-256 encrypted at rest · secure REST channel
             </p>
           </div>
-          <span
-            className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${
-              connected
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-ink-100 text-ink-500'
-            }`}
+          <button
+            type="button"
+            onClick={() => active && loadMessages(active._id)}
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-sand-100 text-ink-700 hover:bg-rose-50"
           >
-            {connected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-            {connected ? 'Connecté' : 'Hors ligne'}
-          </span>
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -145,7 +131,7 @@ export default function Chat() {
               >
                 <p>{m.content}</p>
                 <p className={`text-[10px] mt-1 ${mine ? 'text-rose-100' : 'text-ink-300'}`}>
-                  {new Date(m.createdAt).toLocaleString('fr-FR', {
+                  {new Date(m.createdAt).toLocaleString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',
                     day: '2-digit',
@@ -164,16 +150,16 @@ export default function Chat() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
-            disabled={!active || !connected}
-            placeholder="Message sécurisé…"
+            disabled={!active || sending}
+            placeholder="Secure message…"
             className="flex-1 px-3 py-2 rounded-lg border border-rose-200 bg-white disabled:opacity-50"
           />
           <button
             type="button"
             onClick={send}
-            disabled={!active || !connected || !text.trim()}
+            disabled={!active || sending || !text.trim()}
             className="bg-rose-600 text-white px-4 rounded-lg hover:bg-rose-700 disabled:opacity-50"
-            aria-label="Envoyer"
+            aria-label="Send"
           >
             <Send className="w-5 h-5" />
           </button>

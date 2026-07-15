@@ -1,6 +1,20 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
 
+async function canCommunicate(user, partnerId) {
+  const partner = await User.findById(partnerId);
+  if (!partner) return false;
+
+  if (user.role === 'patient' && partner.role === 'doctor') {
+    return String(user.assignedDoctor) === String(partner._id);
+  }
+  if (user.role === 'doctor' && partner.role === 'patient') {
+    return String(partner.assignedDoctor) === String(user._id);
+  }
+  if (user.role === 'admin') return true;
+  return false;
+}
+
 exports.getConversation = async (req, res) => {
   try {
     const { partnerId } = req.params;
@@ -16,7 +30,7 @@ exports.getConversation = async (req, res) => {
       messages: messages.map((m) => m.toClient()),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur chargement conversation' });
+    res.status(500).json({ message: 'Failed to load conversation' });
   }
 };
 
@@ -42,6 +56,32 @@ exports.getPartners = async (req, res) => {
 
     res.json({ partners: [] });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur partenaires chat' });
+    res.status(500).json({ message: 'Failed to load chat partners' });
+  }
+};
+
+/** REST send — works on Vercel serverless (Socket.io optional locally). */
+exports.sendMessage = async (req, res) => {
+  try {
+    const { receiverId, content } = req.body;
+    if (!receiverId || !content?.trim()) {
+      return res.status(400).json({ message: 'receiverId and content are required' });
+    }
+
+    const allowed = await canCommunicate(req.user, receiverId);
+    if (!allowed) {
+      return res.status(403).json({ message: 'Not allowed to message this user' });
+    }
+
+    const msg = await Message.createEncrypted({
+      sender: req.user._id,
+      receiver: receiverId,
+      content: content.trim(),
+    });
+
+    res.status(201).json({ message: msg.toClient() });
+  } catch (error) {
+    console.error('sendMessage:', error);
+    res.status(500).json({ message: 'Failed to send message' });
   }
 };
