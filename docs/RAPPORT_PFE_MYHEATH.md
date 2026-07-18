@@ -31,4 +31,4 @@ python scripts/generate_uml_figures.py
 python scripts/generate_rapport_55.py
 ```
 
-**Author:** Salaheddine Admo — salaheddine.admo@gmail.com — 2025/2026
+**Author:** Nezha Fekoussa — 2025/2026

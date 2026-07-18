@@ -1,8 +1,11 @@
 # MyHeath — Rapport PFE (ASP.NET Core)
 
+**Réalisatrice / Author:** Nezha Fekoussa  
 **Stack:** ASP.NET Core 8 (C#) · React (Vite) · MongoDB · Docker  
-**PDF généré:** `docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf`  
-**Génération:** `python scripts/generate_rapport_dotnet.py`
+**PDF FR:** `docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf`  
+**PDF EN:** `docs/RAPPORT_PFE_MYHEATH_DOTNET_EN.pdf`  
+**Génération:** `python scripts/generate_rapport_dotnet.py --lang both`  
+**Page de garde Word:** `Page de garde.docx` / `docs/Page_de_garde_MyHeath.docx`
 
 ## Contenu du rapport
 

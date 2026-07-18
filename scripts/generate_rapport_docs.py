@@ -79,7 +79,7 @@ class RapportPDF(FPDF):
         self.set_font("Helvetica", "", 11)
         self.multi_cell(
             0, 7,
-            T("Auteur : Salaheddine Admo\nEmail : salaheddine.admo@gmail.com\nAnnee universitaire : 2025-2026"),
+            T("Auteur : Nezha Fekoussa\nAnnee universitaire : 2025-2026"),
             align="C",
         )
 
@@ -274,7 +274,7 @@ def build_pdf():
     pdf.set_text_color(100, 100, 100)
     pdf.multi_cell(
         0, 5,
-        T("Document academique - HeraCare PFE 2025-2026 - Salaheddine Admo (salaheddine.admo@gmail.com)"),
+        T("Document academique - MyHeath PFE 2025-2026 - Nezha Fekoussa"),
     )
 
     path = OUT / "RAPPORT_PFE_HERACARE.pdf"
@@ -346,7 +346,7 @@ def build_pptx():
     p3.font.size = Pt(16)
     p3.font.color.rgb = MUTED
     p4 = tf.add_paragraph()
-    p4.text = "Salaheddine Admo - salaheddine.admo@gmail.com - 2025/2026"
+    p4.text = "Nezha Fekoussa - 2025/2026"
     p4.font.size = Pt(14)
     p4.font.color.rgb = MUTED
 

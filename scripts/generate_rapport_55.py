@@ -185,7 +185,7 @@ def build():
     pdf.multi_cell(0, 6, T("MERN Stack | Docker | AES-256 Encryption | Predictive Analytics | Claude AI | Vercel Cloud"), align="C")
     pdf.ln(22)
     pdf.set_font("Helvetica", "", 11)
-    pdf.multi_cell(0, 7, T("Author: Salaheddine Admo\nEmail: salaheddine.admo@gmail.com\nAcademic year: 2025 - 2026"), align="C")
+    pdf.multi_cell(0, 7, T("Author: Nezha Fekoussa\nAcademic year: 2025 - 2026"), align="C")
     pdf.ln(16)
     pdf.set_font("Helvetica", "I", 9)
     pdf.multi_cell(0, 5, T("Submitted in partial fulfillment of the requirements for the Engineering Degree"), align="C")
