@@ -1,402 +1,375 @@
 #!/usr/bin/env python3
-"""Generate clear UML / architecture PNG diagrams for the MyHeath PFE report."""
+"""Professional UML / architecture diagrams for MyHeath PFE report."""
 
 from pathlib import Path
-
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, Circle, FancyArrowPatch
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Circle, Ellipse, Rectangle
-import matplotlib.lines as mlines
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
-ROSE = "#c92d55"
-INK = "#1a1216"
-SAND = "#faf7f5"
-BOX = "#fff5f7"
-LINE = "#6b5560"
+# Professional academic palette (navy / slate / teal — not pink)
+NAVY = "#1B365D"
+SLATE = "#334155"
+TEAL = "#0F766E"
+BORDER = "#1E3A5F"
+ARROW = "#475569"
+TEXT = "#0F172A"
+MUTED = "#64748B"
+FILL = "#F1F5F9"
+FILL_ACCENT = "#E0F2FE"
+FILL_TEAL = "#CCFBF1"
+WHITE = "#FFFFFF"
+SOFT = "#F8FAFC"
 
 
 def save(fig, name):
     path = OUT / name
-    fig.savefig(path, dpi=180, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=220, bbox_inches="tight", facecolor=WHITE, pad_inches=0.25)
     plt.close(fig)
     print("wrote", path)
-    return path
 
 
-def rounded(ax, x, y, w, h, text, fc=BOX, ec=ROSE, fontsize=9, weight="bold"):
-    box = FancyBboxPatch(
+def box(ax, x, y, w, h, text, fc=FILL, ec=BORDER, fs=11, weight="bold", radius=0.12):
+    """Large readable rounded rectangle with comfortable padding."""
+    patch = FancyBboxPatch(
         (x, y), w, h,
-        boxstyle="round,pad=0.02,rounding_size=0.08",
-        linewidth=1.8, edgecolor=ec, facecolor=fc, zorder=2,
+        boxstyle=f"round,pad=0.04,rounding_size={radius}",
+        linewidth=2.8,
+        edgecolor=ec,
+        facecolor=fc,
+        zorder=2,
     )
-    ax.add_patch(box)
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
-            fontsize=fontsize, color=INK, weight=weight, zorder=3, wrap=True)
+    ax.add_patch(patch)
+    ax.text(
+        x + w / 2, y + h / 2, text,
+        ha="center", va="center",
+        fontsize=fs, color=TEXT, weight=weight,
+        linespacing=1.45, zorder=3,
+        family="DejaVu Sans",
+        wrap=True,
+    )
 
 
-def arrow(ax, x1, y1, x2, y2, text="", style="-|>"):
+def arrow(ax, x1, y1, x2, y2, label="", lw=2.6):
     ax.annotate(
-        "", xy=(x2, y2), xytext=(x1, y1),
-        arrowprops=dict(arrowstyle=style, color=ROSE, lw=1.6),
+        "",
+        xy=(x2, y2), xytext=(x1, y1),
+        arrowprops=dict(
+            arrowstyle="-|>",
+            color=ARROW,
+            lw=lw,
+            mutation_scale=18,
+            shrinkA=2,
+            shrinkB=2,
+        ),
         zorder=1,
     )
-    if text:
-        ax.text((x1 + x2) / 2, (y1 + y2) / 2 + 0.08, text,
-                ha="center", va="bottom", fontsize=7, color=LINE)
+    if label:
+        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+        # offset label slightly perpendicular
+        ax.text(
+            mx, my + 0.18, label,
+            ha="center", va="bottom",
+            fontsize=10, color=MUTED, weight="normal",
+            bbox=dict(boxstyle="round,pad=0.2", fc=WHITE, ec="none", alpha=0.92),
+            zorder=4,
+        )
+
+
+def title(ax, text):
+    ax.set_title(text, fontsize=15, color=NAVY, weight="bold", pad=16, loc="left")
 
 
 def fig_architecture():
-    fig, ax = plt.subplots(figsize=(11, 6.2))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 6.2)
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 8)
     ax.axis("off")
-    ax.set_title("Figure 2.1 — MyHeath 3-tier MERN Architecture", fontsize=13, color=ROSE, weight="bold", pad=12)
+    fig.patch.set_facecolor(WHITE)
+    title(ax, "Figure 2.1 — Architecture 3-tiers MyHeath (.NET + React + MongoDB)")
 
-    rounded(ax, 0.4, 4.3, 3.0, 1.3, "Presentation Tier\nReact + Vite + Tailwind\n(Vercel SPA)", fc="#ffe4ea")
-    rounded(ax, 4.0, 4.3, 3.0, 1.3, "Application Tier\nNode.js + Express\nREST + AI + Crypto", fc="#ffe4ea")
-    rounded(ax, 7.6, 4.3, 3.0, 1.3, "Data Tier\nMongoDB Atlas\nMongoose ODM", fc="#ffe4ea")
+    # Tier headers
+    box(ax, 0.5, 5.6, 4.0, 1.8,
+        "Couche Presentation\nReact + Vite + Tailwind\nSPA (Vercel / Docker)",
+        fc=FILL_ACCENT, fs=12)
+    box(ax, 5.0, 5.6, 4.0, 1.8,
+        "Couche Application\nASP.NET Core 8 (C#)\nREST API + JWT + AES",
+        fc=FILL_TEAL, fs=12)
+    box(ax, 9.5, 5.6, 4.0, 1.8,
+        "Couche Donnees\nMongoDB 7 / Atlas\nCollections documents",
+        fc=FILL, fs=12)
 
-    arrow(ax, 3.4, 4.95, 4.0, 4.95, "HTTPS / JSON")
-    arrow(ax, 7.0, 4.95, 7.6, 4.95, "Mongoose")
+    arrow(ax, 4.5, 6.5, 5.0, 6.5, "HTTPS / JSON")
+    arrow(ax, 9.0, 6.5, 9.5, 6.5, "MongoDB Driver")
 
-    rounded(ax, 0.6, 2.2, 2.6, 1.4, "Pages\nDashboard / AI\nChat / Records", fontsize=8)
-    rounded(ax, 4.2, 2.2, 2.6, 1.4, "Modules\nAuth · Health\nChat · AI", fontsize=8)
-    rounded(ax, 7.8, 2.2, 2.6, 1.4, "Collections\nusers · logs\nrecords · msgs", fontsize=8)
+    box(ax, 0.7, 2.8, 3.6, 2.0,
+        "UI Dashboard\nSuivi · Period · Diabete\nAdmin · RDV · Chat",
+        fc=WHITE, fs=11)
+    box(ax, 5.2, 2.8, 3.6, 2.0,
+        "Controllers / Services\nAuth · Health · Suivi\nAI · Admin · RDV",
+        fc=WHITE, fs=11)
+    box(ax, 9.7, 2.8, 3.6, 2.0,
+        "Collections\nusers · logs · messages\nplans · appointments",
+        fc=WHITE, fs=11)
 
-    arrow(ax, 1.9, 4.3, 1.9, 3.6)
-    arrow(ax, 5.5, 4.3, 5.5, 3.6)
-    arrow(ax, 9.1, 4.3, 9.1, 3.6)
+    arrow(ax, 2.5, 5.6, 2.5, 4.8)
+    arrow(ax, 7.0, 5.6, 7.0, 4.8)
+    arrow(ax, 11.5, 5.6, 11.5, 4.8)
 
-    rounded(ax, 2.5, 0.35, 6.0, 1.1, "Cross-cutting: JWT + RBAC  |  AES-256-CBC  |  Claude AI (Anthropic)", fc="#f3ebe6", fontsize=9)
+    box(ax, 1.5, 0.5, 11.0, 1.6,
+        "Transversal : JWT + RBAC  |  AES-256-CBC  |  Claude AI (Anthropic)  |  Docker Compose",
+        fc=SOFT, ec=TEAL, fs=12)
     save(fig, "fig_2_1_architecture.png")
 
 
 def fig_deployment():
-    fig, ax = plt.subplots(figsize=(11, 5.5))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 5.5)
+    fig, ax = plt.subplots(figsize=(14, 7.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 7.5)
     ax.axis("off")
-    ax.set_title("Figure 2.2 — Deployment Topology", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.2 — Topologie de deploiement (Docker / Cloud)")
 
-    rounded(ax, 0.3, 2.1, 2.2, 1.3, "Browser\nPatient / Doctor", fc="#fff")
-    rounded(ax, 3.2, 3.3, 2.4, 1.2, "Vercel Frontend\nmyheath SPA", fc="#ffe4ea")
-    rounded(ax, 3.2, 1.0, 2.4, 1.2, "Vercel API\nmyheath-api", fc="#ffe4ea")
-    rounded(ax, 6.5, 3.3, 2.2, 1.2, "Anthropic\nClaude API", fc="#f3ebe6")
-    rounded(ax, 6.5, 1.0, 2.2, 1.2, "MongoDB\nAtlas", fc="#f3ebe6")
-    rounded(ax, 9.2, 2.0, 1.5, 1.3, "GitHub\nRepo", fc="#fff", fontsize=8)
+    box(ax, 0.4, 2.8, 2.8, 1.8, "Navigateur\nPatient / Medecin\n/ Admin", fc=WHITE, fs=11)
+    box(ax, 4.0, 4.8, 3.4, 1.8, "Frontend React\nVercel ou Docker\n:5173", fc=FILL_ACCENT, fs=12)
+    box(ax, 4.0, 1.2, 3.4, 1.8, "API ASP.NET Core\nDocker / Azure\n:5080", fc=FILL_TEAL, fs=12)
+    box(ax, 8.6, 4.8, 2.8, 1.8, "Anthropic\nClaude API\n(IA Coach)", fc=SOFT, fs=11)
+    box(ax, 8.6, 1.2, 2.8, 1.8, "MongoDB\nAtlas ou\nConteneur :27017", fc=SOFT, fs=11)
+    box(ax, 12.0, 2.8, 1.6, 1.8, "GitHub\nRepo\npublic", fc=WHITE, fs=10)
 
-    arrow(ax, 2.5, 2.75, 3.2, 3.7)
-    arrow(ax, 2.5, 2.5, 3.2, 1.6)
-    arrow(ax, 5.6, 3.9, 6.5, 3.9, "AI")
-    arrow(ax, 5.6, 1.6, 6.5, 1.6, "DB")
+    arrow(ax, 3.2, 4.0, 4.0, 5.4, "")
+    arrow(ax, 3.2, 3.4, 4.0, 2.2, "")
+    arrow(ax, 7.4, 5.7, 8.6, 5.7, "HTTPS")
+    arrow(ax, 7.4, 2.1, 8.6, 2.1, "Driver")
+    ax.text(3.5, 6.9, "Docker Compose (.NET) ou Vercel + Atlas", fontsize=11, color=MUTED, style="italic")
     save(fig, "fig_2_2_deployment.png")
 
 
 def fig_usecase():
-    fig, ax = plt.subplots(figsize=(11, 7.2))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 7.2)
+    fig, ax = plt.subplots(figsize=(14, 9))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 9)
     ax.axis("off")
-    ax.set_title("Figure 2.3 — Use Case Diagram", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.3 — Diagramme de cas d'utilisation")
 
     boundary = FancyBboxPatch(
-        (2.3, 0.35), 6.4, 6.5,
-        boxstyle="round,pad=0.02,rounding_size=0.05",
-        linewidth=1.5, edgecolor=ROSE, facecolor="#fffafb", linestyle="--",
+        (3.2, 0.4), 7.6, 8.0,
+        boxstyle="round,pad=0.02,rounding_size=0.15",
+        linewidth=2.2, edgecolor=NAVY, facecolor=SOFT, linestyle="--",
     )
     ax.add_patch(boundary)
-    ax.text(5.5, 6.6, "MyHeath System", ha="center", fontsize=10, color=ROSE, weight="bold")
+    ax.text(7.0, 8.1, "Systeme MyHeath", ha="center", fontsize=13, color=NAVY, weight="bold")
 
     def actor(x, y, label):
-        ax.add_patch(Circle((x, y + 0.55), 0.18, fill=False, edgecolor=INK, lw=1.5))
-        ax.plot([x, x], [y + 0.37, y + 0.05], color=INK, lw=1.5)
-        ax.plot([x - 0.25, x + 0.25], [y + 0.28, y + 0.28], color=INK, lw=1.5)
-        ax.plot([x, x - 0.18], [y + 0.05, y - 0.25], color=INK, lw=1.5)
-        ax.plot([x, x + 0.18], [y + 0.05, y - 0.25], color=INK, lw=1.5)
-        ax.text(x, y - 0.45, label, ha="center", fontsize=9, weight="bold", color=INK)
+        ax.add_patch(Circle((x, y + 0.7), 0.28, fill=False, edgecolor=TEXT, lw=2.2))
+        ax.plot([x, x], [y + 0.42, y - 0.05], color=TEXT, lw=2.2)
+        ax.plot([x - 0.35, x + 0.35], [y + 0.28, y + 0.28], color=TEXT, lw=2.2)
+        ax.plot([x, x - 0.25], [y - 0.05, y - 0.45], color=TEXT, lw=2.2)
+        ax.plot([x, x + 0.25], [y - 0.05, y - 0.45], color=TEXT, lw=2.2)
+        ax.text(x, y - 0.75, label, ha="center", fontsize=11, weight="bold", color=TEXT)
 
-    actor(0.85, 4.8, "Patient")
-    actor(10.15, 4.8, "Doctor")
-    actor(10.15, 1.4, "Admin")
+    actor(1.3, 6.5, "Patient")
+    actor(1.3, 3.2, "Medecin")
+    actor(12.7, 5.0, "Admin")
 
-    # (cx, cy, label)
-    cases = {
-        "auth": (5.5, 5.85, "Authenticate"),
-        "log": (3.5, 4.85, "Log symptoms"),
-        "insights": (7.5, 4.85, "View insights"),
-        "record": (3.5, 3.85, "Manage record"),
-        "ai": (7.5, 3.85, "Use MyHeath AI"),
-        "assign": (3.5, 2.85, "Assign doctor"),
-        "chat": (7.5, 2.85, "Secure chat"),
-        "brief": (3.5, 1.85, "Doctor brief"),
-        "wellness": (7.5, 1.85, "Wellness plan"),
-        "users": (5.5, 0.9, "Manage users"),
-    }
-    for _, (x, y, t) in cases.items():
-        e = Ellipse((x, y), 2.2, 0.75, facecolor="white", edgecolor=ROSE, lw=1.6, zorder=2)
-        ax.add_patch(e)
-        ax.text(x, y, t, ha="center", va="center", fontsize=8, color=INK, zorder=3)
+    cases = [
+        (4.0, 7.0, "Suivi quotidien"),
+        (7.2, 7.0, "Gestion periodes"),
+        (4.0, 5.5, "Diabete / glycemie"),
+        (7.2, 5.5, "Coach IA Claude"),
+        (4.0, 4.0, "Dossier chiffre"),
+        (7.2, 4.0, "Messagerie / RDV"),
+        (5.5, 2.5, "Console admin\nUsers · Plans · Audit"),
+    ]
+    for x, y, t in cases:
+        box(ax, x, y, 2.6, 1.1, t, fc=WHITE, ec=TEAL, fs=10, radius=0.35)
 
-    def link(x1, y1, x2, y2):
-        ax.plot([x1, x2], [y1, y2], color=LINE, lw=1.1, zorder=1)
-
-    # Patient associations (left actor -> left/center use cases)
-    px, py = 1.15, 5.2
-    for key in ["auth", "log", "record", "ai", "assign", "chat", "brief", "wellness"]:
-        x, y, _ = cases[key]
-        link(px, py, x - 1.1, y)
-
-    # Doctor associations
-    dx, dy = 9.85, 5.2
-    for key in ["auth", "insights", "chat", "brief"]:
-        x, y, _ = cases[key]
-        link(dx, dy, x + 1.1, y)
-
-    # Admin
-    link(9.85, 1.6, cases["users"][0] + 1.1, cases["users"][1])
-
+    # associations
+    for y in (7.5, 6.0, 4.5, 3.0):
+        ax.plot([1.7, 4.0], [y, y], color=ARROW, lw=1.8)
+    ax.plot([1.7, 4.0], [3.5, 4.5], color=ARROW, lw=1.8)
+    ax.plot([12.2, 8.1], [5.2, 3.0], color=ARROW, lw=1.8)
     save(fig, "fig_2_3_usecase.png")
 
 
 def fig_sequence_login():
-    fig, ax = plt.subplots(figsize=(11, 6.5))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 6.5)
-    axis = False
+    fig, ax = plt.subplots(figsize=(14, 7.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 7.5)
     ax.axis("off")
-    ax.set_title("Figure 2.4 — Sequence: Login & JWT", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.4 — Sequence : authentification JWT")
 
-    actors = [("Client\n(React)", 1.5), ("API\n/auth/login", 5.5), ("MongoDB", 9.0)]
-    for name, x in actors:
-        rounded(ax, x - 0.9, 5.5, 1.8, 0.8, name, fontsize=8)
-        ax.plot([x, x], [5.5, 0.4], color="#d0c4c8", lw=1.2, linestyle="--")
+    cols = [(2, "React\nClient"), (5.5, "API\nASP.NET"), (9, "MongoDB"), (12, "JWT\nService")]
+    for x, label in cols:
+        box(ax, x - 1.1, 6.2, 2.2, 1.0, label, fc=FILL_ACCENT, fs=11)
+        ax.plot([x, x], [0.6, 6.2], color="#CBD5E1", lw=2, linestyle="--")
 
     steps = [
-        (1.5, 5.0, 5.5, 5.0, "1. POST email+password"),
-        (5.5, 4.4, 9.0, 4.4, "2. find user +password"),
-        (9.0, 3.8, 5.5, 3.8, "3. user document"),
-        (5.5, 3.2, 5.5, 3.2, ""),  # self
-        (5.5, 2.6, 1.5, 2.6, "5. { token, user }"),
+        (2, 5.5, 5.5, 5.5, "1. POST /auth/login"),
+        (5.5, 4.7, 9, 4.7, "2. Find user + BCrypt"),
+        (9, 4.0, 5.5, 4.0, "3. User document"),
+        (5.5, 3.2, 12, 3.2, "4. CreateToken()"),
+        (12, 2.4, 5.5, 2.4, "5. JWT (7 jours)"),
+        (5.5, 1.5, 2, 1.5, "6. { token, user }"),
     ]
-    # self message for bcrypt+jwt
-    ax.annotate("", xy=(6.3, 3.2), xytext=(5.5, 3.2),
-                arrowprops=dict(arrowstyle="-|>", color=ROSE, lw=1.4))
-    ax.text(6.5, 3.25, "4. bcrypt.compare + jwt.sign", fontsize=7, color=LINE, va="center")
-
-    for x1, y1, x2, y2, t in steps:
-        if not t:
-            continue
-        ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                    arrowprops=dict(arrowstyle="-|>", color=ROSE, lw=1.5))
-        ax.text((x1 + x2) / 2, y1 + 0.12, t, ha="center", fontsize=7.5, color=INK)
-
+    for x1, y1, x2, y2, lab in steps:
+        arrow(ax, x1, y1, x2, y2, lab)
     save(fig, "fig_2_4_sequence_login.png")
 
 
 def fig_sequence_insights():
-    fig, ax = plt.subplots(figsize=(11, 6.5))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 6.5)
+    fig, ax = plt.subplots(figsize=(14, 7.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 7.5)
     ax.axis("off")
-    ax.set_title("Figure 2.5 — Sequence: Insights Computation", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.5 — Sequence : calcul des insights cycle")
 
-    actors = [("Dashboard", 1.3), ("API\n/insights", 4.0), ("SymptomLog", 6.8), ("analyzer.js", 9.3)]
-    for name, x in actors:
-        rounded(ax, x - 0.85, 5.5, 1.7, 0.8, name, fontsize=8)
-        ax.plot([x, x], [5.5, 0.4], color="#d0c4c8", lw=1.2, linestyle="--")
+    cols = [(2.5, "Patient\nUI"), (6.5, "Health\nController"), (10.5, "Cycle\nAnalyzer")]
+    for x, label in cols:
+        box(ax, x - 1.2, 6.2, 2.4, 1.0, label, fc=FILL_TEAL, fs=11)
+        ax.plot([x, x], [0.6, 6.2], color="#CBD5E1", lw=2, linestyle="--")
 
-    msgs = [
-        (1.3, 5.0, 4.0, 5.0, "1. GET /health/insights + JWT"),
-        (4.0, 4.3, 6.8, 4.3, "2. find({patient}).sort(date)"),
-        (6.8, 3.6, 4.0, 3.6, "3. logs[]"),
-        (4.0, 2.9, 9.3, 2.9, "4. analyzeCycle(cycles, logs)"),
-        (9.3, 2.2, 4.0, 2.2, "5. insights object"),
-        (4.0, 1.5, 1.3, 1.5, "6. JSON { insights, logsCount }"),
+    steps = [
+        (2.5, 5.4, 6.5, 5.4, "GET /health/insights"),
+        (6.5, 4.4, 10.5, 4.4, "SymptomLog period_start"),
+        (10.5, 3.4, 6.5, 3.4, "avg, ovulation, anomalies"),
+        (6.5, 2.2, 2.5, 2.2, "JSON insights"),
     ]
-    for x1, y1, x2, y2, t in msgs:
-        ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                    arrowprops=dict(arrowstyle="-|>", color=ROSE, lw=1.5))
-        ax.text((x1 + x2) / 2, y1 + 0.12, t, ha="center", fontsize=7.2, color=INK)
-
+    for x1, y1, x2, y2, lab in steps:
+        arrow(ax, x1, y1, x2, y2, lab)
     save(fig, "fig_2_5_sequence_insights.png")
 
 
 def fig_class():
-    fig, ax = plt.subplots(figsize=(11, 7))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 7)
+    fig, ax = plt.subplots(figsize=(14, 9))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 9)
     ax.axis("off")
-    ax.set_title("Figure 2.6 — Domain Class Diagram", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.6 — Modele de domaines (extrait)")
 
-    def clazz(x, y, w, h, title, fields, methods=None):
-        # header
-        ax.add_patch(Rectangle((x, y + h * 0.72), w, h * 0.28, facecolor=ROSE, edgecolor=ROSE, lw=1.5))
-        ax.text(x + w / 2, y + h * 0.86, title, ha="center", va="center", color="white", fontsize=9, weight="bold")
-        ax.add_patch(Rectangle((x, y), w, h * 0.72, facecolor="white", edgecolor=ROSE, lw=1.5))
-        body = "\n".join(fields)
-        if methods:
-            body += "\n----- \n" + "\n".join(methods)
-        ax.text(x + 0.1, y + h * 0.68, body, ha="left", va="top", fontsize=7.2, color=INK, family="monospace")
+    def clazz(x, y, w, h, name, fields):
+        body = name + "\n" + "─" * 18 + "\n" + "\n".join(fields)
+        box(ax, x, y, w, h, body, fc=WHITE, ec=NAVY, fs=9, weight="normal", radius=0.08)
 
-    clazz(0.3, 4.0, 3.2, 2.6, "User",
-          ["+ id: ObjectId", "+ email: String", "+ password: String", "+ role: Enum", "+ assignedDoctor"],
-          ["+ comparePassword()", "+ toSafeJSON()"])
-    clazz(4.0, 4.0, 3.2, 2.6, "HealthRecord",
-          ["+ patient: ObjectId", "+ bloodType", "+ *Encrypted fields"],
-          ["+ setSensitiveFields()", "+ getDecrypted()"])
-    clazz(7.6, 4.0, 3.1, 2.6, "SymptomLog",
-          ["+ patient: ObjectId", "+ date: Date", "+ entryType", "+ painLevel", "+ symptoms[]"],
-          [])
-    clazz(2.2, 0.5, 3.2, 2.5, "Message",
-          ["+ sender / receiver", "+ encryptedContent", "+ conversationId"],
-          ["+ createEncrypted()", "+ toClient()"])
-    clazz(6.0, 0.5, 3.4, 2.5, "Services",
-          ["analyzer.analyzeCycle()", "crypto.encrypt/decrypt", "claude.callClaude()"],
-          [])
+    clazz(0.4, 5.5, 3.2, 3.0, "User", ["id, email, role", "gender, hasDiabetes", "assignedDoctor"])
+    clazz(4.2, 5.5, 3.2, 3.0, "DailyHealthLog", ["patient, date", "sleep, stress, glucose", "healthScore"])
+    clazz(8.0, 5.5, 3.2, 3.0, "HealthRecord", ["patient", "AES fields", "bloodType"])
+    clazz(11.5, 5.8, 2.2, 2.4, "Message", ["sender", "receiver", "AES content"])
+    clazz(0.4, 1.2, 3.2, 3.2, "SubscriptionPlan", ["code, price", "interval", "features"])
+    clazz(4.2, 1.2, 3.2, 3.2, "UserSubscription", ["user, plan", "status, dates", "managedBy"])
+    clazz(8.0, 1.2, 3.2, 3.2, "Appointment", ["patient, doctor", "scheduledAt", "status, mode"])
+    clazz(11.5, 1.5, 2.2, 2.6, "AuditLog", ["actor", "action", "entity"])
 
-    # relations
-    ax.annotate("", xy=(4.0, 5.2), xytext=(3.5, 5.2), arrowprops=dict(arrowstyle="-|>", color=LINE, lw=1.3))
-    ax.text(3.7, 5.4, "1", fontsize=7, color=LINE)
-    ax.annotate("", xy=(7.6, 5.2), xytext=(7.2, 5.2), arrowprops=dict(arrowstyle="-|>", color=LINE, lw=1.3))
-    ax.text(6.0, 5.45, "logs", fontsize=7, color=LINE)
-    ax.annotate("", xy=(3.8, 3.0), xytext=(2.0, 4.0), arrowprops=dict(arrowstyle="-|>", color=LINE, lw=1.3))
-    ax.text(2.4, 3.3, "sends", fontsize=7, color=LINE)
-
+    arrow(ax, 3.6, 6.8, 4.2, 6.8)
+    arrow(ax, 3.6, 6.2, 4.2, 2.8)
     save(fig, "fig_2_6_class.png")
 
 
 def fig_aes():
-    fig, ax = plt.subplots(figsize=(11, 4.8))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 4.8)
+    fig, ax = plt.subplots(figsize=(14, 6.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 6.5)
     ax.axis("off")
-    ax.set_title("Figure 2.7 — AES-256-CBC Encryption Pipeline", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.7 — Chiffrement AES-256-CBC des donnees sensibles")
 
-    steps = [
-        (0.3, "Plaintext\nclinical data"),
-        (2.5, "Random IV\n16 bytes"),
-        (4.7, "AES-256-CBC\nkey=SHA256(secret)"),
-        (7.1, "Ciphertext"),
-        (9.0, "Store\niv:cipher"),
-    ]
-    for i, (x, t) in enumerate(steps):
-        rounded(ax, x, 1.7, 1.8, 1.5, t, fontsize=8)
-        if i < len(steps) - 1:
-            arrow(ax, x + 1.8, 2.45, steps[i + 1][0], 2.45)
-
-    ax.text(5.5, 0.6, "Decrypt only on server after JWT + RBAC authorization",
-            ha="center", fontsize=9, color=LINE, style="italic")
+    box(ax, 0.5, 2.2, 3.2, 2.4, "Donnee claire\nallergies /\nmessage chat", fc=WHITE, fs=12)
+    box(ax, 4.5, 2.2, 5.0, 2.4, "AES-256-CBC\ncle = SHA-256(secret)\nIV aleatoire 16 octets", fc=FILL_TEAL, fs=12)
+    box(ax, 10.3, 2.2, 3.2, 2.4, "Stockage Mongo\niv_hex:cipher_hex", fc=FILL_ACCENT, fs=12)
+    arrow(ax, 3.7, 3.4, 4.5, 3.4, "Encrypt")
+    arrow(ax, 9.5, 3.4, 10.3, 3.4, "Persist")
+    ax.text(7.0, 1.2, "Dechiffrement uniquement cote API apres JWT + RBAC", ha="center", fontsize=11, color=MUTED, style="italic")
     save(fig, "fig_2_7_aes.png")
 
 
 def fig_predictive():
-    fig, ax = plt.subplots(figsize=(10, 7.5))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 7.5)
+    fig, ax = plt.subplots(figsize=(14, 6.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 6.5)
     ax.axis("off")
-    ax.set_title("Figure 2.8 — Predictive Cycle Analysis Flowchart", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.8 — Pipeline score sante & analyse de cycle")
 
-    # diamond helper
-    def diamond(cx, cy, text):
-        d = mpatches.FancyBboxPatch((cx - 1.3, cy - 0.45), 2.6, 0.9,
-                                   boxstyle="round,pad=0.02,rounding_size=0.4",
-                                   facecolor="#fff0f3", edgecolor=ROSE, lw=1.5)
-        ax.add_patch(d)
-        ax.text(cx, cy, text, ha="center", va="center", fontsize=8, color=INK)
-
-    rounded(ax, 3.5, 6.5, 3.0, 0.7, "Start: period_start logs", fontsize=8)
-    arrow(ax, 5.0, 6.5, 5.0, 6.05)
-    rounded(ax, 3.3, 5.4, 3.4, 0.65, "Compute cycle lengths", fontsize=8)
-    arrow(ax, 5.0, 5.4, 5.0, 4.95)
-    rounded(ax, 3.3, 4.3, 3.4, 0.65, "Mean / std / next period", fontsize=8)
-    arrow(ax, 5.0, 4.3, 5.0, 3.85)
-    rounded(ax, 3.3, 3.2, 3.4, 0.65, "Ovulation window J-14 +/-2", fontsize=8)
-    arrow(ax, 5.0, 3.2, 5.0, 2.75)
-    diamond(5.0, 2.2, "Anomaly rules?")
-    arrow(ax, 5.0, 1.75, 5.0, 1.35)
-    rounded(ax, 3.3, 0.5, 3.4, 0.7, "Return insights + chartData", fontsize=8, fc="#e8fff0", ec="#2f9e44")
-
-    # side branch
-    ax.annotate("", xy=(7.2, 2.2), xytext=(6.3, 2.2),
-                arrowprops=dict(arrowstyle="-|>", color=ROSE, lw=1.3))
-    rounded(ax, 7.3, 1.7, 2.3, 1.0, "Flag high/medium\nalerts", fontsize=7)
-    ax.text(6.7, 2.45, "yes", fontsize=7, color=LINE)
-
+    steps = [
+        (0.4, "Journal\nquotidien"),
+        (3.2, "Features\nsommeil, stress\nglycemie..."),
+        (6.2, "HealthScore\nService\n0 — 100"),
+        (9.2, "Cycle\nAnalyzer\nanomalies"),
+        (11.8, "Dashboard\n+ Alertes"),
+    ]
+    for i, (x, t) in enumerate(steps):
+        box(ax, x, 2.2, 2.4, 2.6, t, fc=FILL_ACCENT if i % 2 == 0 else FILL_TEAL, fs=11)
+        if i < len(steps) - 1:
+            arrow(ax, x + 2.4, 3.5, steps[i + 1][0], 3.5)
     save(fig, "fig_2_8_predictive.png")
 
 
 def fig_ai():
-    fig, ax = plt.subplots(figsize=(11, 5.2))
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 5.2)
+    fig, ax = plt.subplots(figsize=(14, 7))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 7)
     ax.axis("off")
-    ax.set_title("Figure 2.9 — MyHeath AI Contextual Prompt Pipeline", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 2.9 — Integration MyHeath AI Coach (Claude)")
 
-    boxes = [
-        (0.3, "1. Auth\nJWT user"),
-        (2.4, "2. Build\ncontext JSON"),
-        (4.5, "3. System\nprompt + safety"),
-        (6.6, "4. Claude\nMessages API"),
-        (8.7, "5. Reply /\nJSON parse"),
-    ]
-    for i, (x, t) in enumerate(boxes):
-        rounded(ax, x, 2.0, 1.9, 1.5, t, fontsize=8)
-        if i < len(boxes) - 1:
-            arrow(ax, x + 1.9, 2.75, boxes[i + 1][0], 2.75)
-
-    rounded(ax, 2.0, 0.35, 7.0, 0.9,
-            "Context includes: insights + recent logs + allergies/meds summary (decrypted server-side)",
-            fontsize=8, fc="#f3ebe6")
+    box(ax, 0.5, 2.5, 3.0, 2.8, "Patient\nFrontend\n/ai", fc=WHITE, fs=12)
+    box(ax, 4.3, 2.5, 3.4, 2.8, "AiController\n+ contexte\nDailyHealthLog", fc=FILL_TEAL, fs=12)
+    box(ax, 8.5, 2.5, 2.8, 2.8, "ClaudeService\nAnthropic\nMessages API", fc=FILL_ACCENT, fs=11)
+    box(ax, 12.0, 2.5, 1.6, 2.8, "Reponse\n+ disclaimer", fc=SOFT, fs=10)
+    arrow(ax, 3.5, 3.9, 4.3, 3.9)
+    arrow(ax, 7.7, 3.9, 8.5, 3.9, "HTTPS")
+    arrow(ax, 11.3, 3.9, 12.0, 3.9)
+    ax.text(7.0, 1.3, "Usage educatif uniquement — pas un diagnostic medical", ha="center", fontsize=11, color=MUTED, style="italic")
     save(fig, "fig_2_9_ai.png")
 
 
-def fig_backend_structure():
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
+def fig_backend():
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 8)
     ax.axis("off")
-    ax.set_title("Figure 3.1 — Backend Folder Structure", fontsize=13, color=ROSE, weight="bold", pad=12)
-    tree = (
-        "backend/\n"
-        "├─ api/index.js          (Vercel serverless entry)\n"
-        "├─ src/app.js            (Express app)\n"
-        "├─ src/server.js         (local listen + Socket.io)\n"
-        "├─ src/config/db.js\n"
-        "├─ src/models/           User, HealthRecord, SymptomLog, Message\n"
-        "├─ src/controllers/      auth, health, chat, ai\n"
-        "├─ src/routes/\n"
-        "├─ src/middlewares/auth.middleware.js\n"
-        "├─ src/utils/            crypto.js, analyzer.js, claude.js\n"
-        "└─ src/sockets/chat.socket.js"
+    title(ax, "Figure 3.1 — Organisation du backend ASP.NET Core")
+
+    patch = FancyBboxPatch(
+        (4.5, 6.5), 5.0, 1.2,
+        boxstyle="round,pad=0.02,rounding_size=0.12",
+        linewidth=2.4, edgecolor=BORDER, facecolor=NAVY, zorder=2,
     )
-    ax.text(0.5, 5.2, tree, ha="left", va="top", fontsize=10, family="monospace", color=INK,
-            bbox=dict(boxstyle="round,pad=0.6", facecolor=SAND, edgecolor=ROSE, lw=1.5))
+    ax.add_patch(patch)
+    ax.text(
+        7.0, 7.1, "Program.cs — DI · JWT · CORS · Swagger",
+        ha="center", va="center", fontsize=12, color=WHITE, weight="bold", zorder=3,
+    )
+
+    layers = [
+        (0.5, "Controllers\nAuth Health Suivi\nChat AI Admin\nRDV Notif Meds", FILL_ACCENT),
+        (5.0, "Services\nMongo AES JWT\nClaude Seed\nHealthScore", FILL_TEAL),
+        (9.5, "Models\nUser Log Message\nPlan Appointment\nAudit", FILL),
+    ]
+    for x, t, fc in layers:
+        box(ax, x, 2.8, 4.0, 2.8, t, fc=fc, fs=12)
+    box(ax, 2.5, 0.5, 9.0, 1.5, "MongoDB  |  Anthropic  |  Docker / Azure", fc=SOFT, ec=TEAL, fs=12)
+    arrow(ax, 7.0, 6.5, 7.0, 5.6)
     save(fig, "fig_3_1_backend.png")
 
 
 def fig_routes():
-    fig, ax = plt.subplots(figsize=(10, 5.5))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 5.5)
+    fig, ax = plt.subplots(figsize=(14, 8.5))
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 8.5)
     ax.axis("off")
-    ax.set_title("Figure 3.2 — Frontend Route Map", fontsize=13, color=ROSE, weight="bold", pad=12)
+    title(ax, "Figure 3.3 — Cartographie des routes API (/api)")
 
     routes = [
-        (1.0, 4.0, "/\nLanding"),
-        (3.5, 4.0, "/login"),
-        (6.0, 4.0, "/register"),
-        (1.0, 2.0, "/dashboard\nTracking"),
-        (3.5, 2.0, "/ai\nMyHeath AI"),
-        (6.0, 2.0, "/chat\nConsult"),
-        (8.3, 2.0, "/dossier\nRecords"),
+        (0.4, 5.5, "/api/auth", "login · register\nme · doctors"),
+        (3.7, 5.5, "/api/health", "symptoms · periods\ninsights · record"),
+        (7.0, 5.5, "/api/suivi", "daily · diabetes\nscore predictif"),
+        (10.3, 5.5, "/api/ai", "chat · coach\nwellness · brief"),
+        (0.4, 2.0, "/api/admin", "users · plans\nsubs · audit"),
+        (3.7, 2.0, "/api/chat", "partners · send\nconversation"),
+        (7.0, 2.0, "/api/appointments", "book · status\nliste RDV"),
+        (10.3, 2.0, "/api/medications\n/notifications", "rappels\nalertes"),
     ]
-    for x, y, t in routes:
-        rounded(ax, x, y, 1.9, 1.1, t, fontsize=8)
-    rounded(ax, 3.0, 0.3, 4.0, 0.8, "PrivateRoute + AuthContext (JWT)", fontsize=8, fc="#ffe4ea")
-    arrow(ax, 5.0, 2.0, 5.0, 1.1)
+    for x, y, name, detail in routes:
+        box(ax, x, y, 3.0, 2.5, f"{name}\n\n{detail}", fc=WHITE, ec=BORDER, fs=10)
     save(fig, "fig_3_3_routes.png")
 
 
@@ -410,9 +383,9 @@ def main():
     fig_aes()
     fig_predictive()
     fig_ai()
-    fig_backend_structure()
+    fig_backend()
     fig_routes()
-    print("All figures generated in", OUT)
+    print("All figures regenerated in", OUT)
 
 
 if __name__ == "__main__":

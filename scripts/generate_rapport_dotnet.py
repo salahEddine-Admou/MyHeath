@@ -1,12 +1,27 @@
 #!/usr/bin/env python3
-"""Generate MyHeath PFE report focused on ASP.NET Core + MongoDB + React + Docker."""
+"""
+MyHeath PFE report — professional layout:
+- Cover + Abstract
+- Table of contents with page numbers (two-pass)
+- Consistent navy/teal academic styling
+- Large embedded UML figures
+"""
 
 from pathlib import Path
 from fpdf import FPDF
 
 OUT = Path(__file__).resolve().parent.parent / "docs"
-OUT.mkdir(exist_ok=True)
 FIGS = OUT / "figures"
+OUT.mkdir(exist_ok=True)
+
+# Academic palette
+NAVY = (27, 54, 93)
+TEAL = (15, 118, 110)
+SLATE = (51, 65, 85)
+TEXT = (30, 41, 59)
+MUTED = (100, 116, 139)
+LINE = (203, 213, 225)
+LIGHT = (248, 250, 252)
 
 
 def T(s: str) -> str:
@@ -16,6 +31,7 @@ def T(s: str) -> str:
         "É": "E", "À": "A", "Ç": "C", "’": "'", "‘": "'", "“": '"', "”": '"',
         "–": "-", "—": "-", "…": "...", "«": '"', "»": '"',
         "≤": "<=", "≥": ">=", "→": "->", "↔": "<->", "•": "-",
+        "─": "-",
     }
     for a, b in repl.items():
         s = s.replace(a, b)
@@ -23,197 +39,368 @@ def T(s: str) -> str:
 
 
 class Thesis(FPDF):
+    def __init__(self):
+        super().__init__()
+        self._toc = []  # (level, title, page)
+        self._front_matter = True
+        self.set_auto_page_break(True, margin=22)
+        self.set_margins(18, 20, 18)
+
     def header(self):
-        if self.page_no() <= 2:
+        if self._front_matter:
             return
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(168, 33, 69)
-        self.cell(0, 6, T("MyHeath - PFE Report (ASP.NET Core)"), align="L")
-        self.ln(2)
-        self.set_draw_color(201, 45, 85)
-        self.line(15, self.get_y(), 195, self.get_y())
-        self.ln(6)
+        self.set_font("Helvetica", "", 8)
+        self.set_text_color(*MUTED)
+        self.cell(0, 6, T("MyHeath — Rapport PFE  |  ASP.NET Core · React · MongoDB"), align="L")
+        self.ln(1)
+        self.set_draw_color(*LINE)
+        self.set_line_width(0.4)
+        self.line(self.l_margin, self.get_y() + 1, self.w - self.r_margin, self.get_y() + 1)
+        self.ln(8)
 
     def footer(self):
-        self.set_y(-14)
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(110, 110, 110)
-        self.cell(0, 8, f"{self.page_no()}", align="C")
+        self.set_y(-16)
+        self.set_draw_color(*LINE)
+        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+        self.ln(2)
+        self.set_font("Helvetica", "", 9)
+        self.set_text_color(*MUTED)
+        if self._front_matter:
+            # roman-like simple: use page number still
+            self.cell(0, 8, f"- {self.page_no()} -", align="C")
+        else:
+            self.cell(0, 8, T(f"Page {self.page_no()}"), align="C")
 
-    def h1(self, text):
+    def h1(self, text, record=True):
         self.add_page()
+        self._front_matter = False
+        if record:
+            self._toc.append((1, text, self.page_no()))
         self.set_x(self.l_margin)
+        self.set_fill_color(*NAVY)
+        self.rect(self.l_margin, self.get_y(), 3.5, 10, style="F")
+        self.set_xy(self.l_margin + 6, self.get_y())
         self.set_font("Helvetica", "B", 16)
-        self.set_text_color(201, 45, 85)
+        self.set_text_color(*NAVY)
         self.multi_cell(0, 9, T(text))
-        self.ln(3)
+        self.ln(2)
+        self.set_draw_color(*TEAL)
+        self.set_line_width(0.8)
+        y = self.get_y()
+        self.line(self.l_margin, y, self.l_margin + 55, y)
+        self.ln(6)
 
-    def h2(self, text):
+    def h2(self, text, record=True):
+        if self.get_y() > 250:
+            self.add_page()
         self.set_x(self.l_margin)
-        self.ln(3)
+        self.ln(4)
+        if record:
+            self._toc.append((2, text, self.page_no()))
         self.set_font("Helvetica", "B", 12)
-        self.set_text_color(26, 18, 22)
+        self.set_text_color(*TEAL)
         self.multi_cell(0, 7, T(text))
-        self.ln(1)
+        self.ln(2)
 
     def h3(self, text):
         self.set_x(self.l_margin)
         self.ln(2)
         self.set_font("Helvetica", "B", 11)
-        self.set_text_color(80, 40, 55)
+        self.set_text_color(*SLATE)
         self.multi_cell(0, 6, T(text))
         self.ln(1)
 
     def p(self, text):
         self.set_x(self.l_margin)
-        self.set_font("Helvetica", "", 10)
-        self.set_text_color(35, 35, 35)
-        self.multi_cell(0, 5.8, T(text))
-        self.ln(1.2)
+        self.set_font("Helvetica", "", 10.5)
+        self.set_text_color(*TEXT)
+        self.multi_cell(0, 6.0, T(text), align="J")
+        self.ln(1.5)
 
     def bullet(self, text):
-        self.set_x(self.l_margin)
-        self.set_font("Helvetica", "", 10)
-        self.set_text_color(35, 35, 35)
-        self.multi_cell(0, 5.5, T(f"- {text}"))
-        self.ln(0.5)
+        self.set_x(self.l_margin + 2)
+        self.set_font("Helvetica", "", 10.5)
+        self.set_text_color(*TEXT)
+        self.multi_cell(0, 5.8, T(f"  •  {text}"))
+        self.ln(0.8)
 
     def code(self, text):
         self.set_x(self.l_margin)
-        self.set_font("Courier", "", 8)
-        self.set_fill_color(248, 242, 244)
-        self.set_text_color(40, 40, 40)
-        self.multi_cell(0, 4.5, T(text), fill=True)
-        self.ln(2)
+        self.set_font("Courier", "", 8.5)
+        self.set_fill_color(*LIGHT)
+        self.set_text_color(*SLATE)
+        self.set_draw_color(*LINE)
+        self.multi_cell(0, 5, T(text), fill=True, border=1)
+        self.ln(3)
 
-    def center(self, text, size=11, bold=False):
+    def center(self, text, size=11, bold=False, color=None):
         self.set_x(self.l_margin)
         self.set_font("Helvetica", "B" if bold else "", size)
+        self.set_text_color(*(color or TEXT))
         self.multi_cell(0, 7, T(text), align="C")
 
     def fig(self, name, caption):
         path = FIGS / name
-        if path.exists():
-            self.ln(2)
-            self.image(str(path), w=170)
-            self.set_font("Helvetica", "I", 9)
-            self.set_text_color(90, 90, 90)
-            self.multi_cell(0, 5, T(caption))
-            self.ln(2)
+        if not path.exists():
+            self.p(f"[Figure manquante: {name}]")
+            return
+        if self.get_y() > 160:
+            self.add_page()
+        self.ln(3)
+        # Fit width with margins
+        usable = self.w - self.l_margin - self.r_margin
+        self.image(str(path), x=self.l_margin, w=usable)
+        self.ln(2)
+        self.set_font("Helvetica", "I", 9)
+        self.set_text_color(*MUTED)
+        self.set_x(self.l_margin)
+        self.multi_cell(0, 5, T(caption), align="C")
+        self.ln(4)
+
+    def table(self, headers, rows):
+        self.set_x(self.l_margin)
+        usable = self.w - self.l_margin - self.r_margin
+        col_w = usable / len(headers)
+        self.set_font("Helvetica", "B", 9)
+        self.set_fill_color(*NAVY)
+        self.set_text_color(255, 255, 255)
+        for h in headers:
+            self.cell(col_w, 8, T(h)[:26], border=0, fill=True, align="C")
+        self.ln()
+        self.set_font("Helvetica", "", 9)
+        fill = False
+        for row in rows:
+            self.set_x(self.l_margin)
+            self.set_fill_color(*(LIGHT if fill else (255, 255, 255)))
+            self.set_text_color(*TEXT)
+            for cell in row:
+                self.cell(col_w, 7, T(str(cell))[:30], border="B", fill=True)
+            self.ln()
+            fill = not fill
+        self.ln(4)
 
 
-def build():
-    pdf = Thesis()
-    pdf.set_auto_page_break(True, 18)
-    pdf.set_margins(15, 15, 15)
-
-    # Cover
+def write_cover(pdf: Thesis):
+    pdf._front_matter = True
     pdf.add_page()
-    pdf.ln(30)
-    pdf.set_text_color(201, 45, 85)
-    pdf.center("MyHeath", size=22, bold=True)
-    pdf.set_text_color(40, 40, 40)
-    pdf.center("Plateforme de telemedecine & sante connectee", size=14)
+    pdf.ln(12)
+    pdf.center("ROYAUME DU MAROC", size=11, bold=True, color=NAVY)
+    pdf.center("Ministere de l'Enseignement Superieur", size=10, color=SLATE)
+    pdf.center("Sciences de l'Ingenieur — Genie Informatique", size=10, color=SLATE)
     pdf.ln(8)
-    pdf.center("Rapport de Projet de Fin d'Etudes", size=13, bold=True)
-    pdf.ln(4)
-    pdf.center("Backend ASP.NET Core 8  |  Frontend React  |  MongoDB  |  Docker", size=11)
+    pdf.set_draw_color(*TEAL)
+    pdf.set_line_width(1.0)
+    y = pdf.get_y()
+    pdf.line(55, y, 155, y)
+    pdf.ln(12)
+    pdf.center("PROJET DE FIN D'ETUDES", size=12, bold=True, color=MUTED)
+    pdf.ln(8)
+    pdf.center("MyHeath", size=28, bold=True, color=NAVY)
+    pdf.ln(2)
+    pdf.center("Plateforme de telemedecine et sante connectee", size=13, color=SLATE)
+    pdf.ln(6)
+    pdf.center("Backend ASP.NET Core 8  ·  Frontend React  ·  MongoDB  ·  Docker", size=10, color=TEAL)
+    pdf.ln(16)
+    pdf.set_fill_color(*LIGHT)
+    pdf.set_x(35)
+    pdf.cell(140, 28, "", border=0, fill=True, ln=1)
+    pdf.set_y(pdf.get_y() - 24)
+    pdf.center("Rapport technique et academique", size=11, bold=True, color=NAVY)
+    pdf.center("Architecture, securite, realisation, Docker et deploiement", size=10, color=SLATE)
     pdf.ln(20)
-    pdf.center("Annee universitaire 2025-2026", size=11)
-    pdf.ln(4)
-    pdf.center("Stack cible: .NET (C#) + React + MongoDB Atlas / Docker", size=11)
+    pdf.center("Annee universitaire 2025 — 2026", size=11, color=TEXT)
+    pdf.ln(6)
+    pdf.center("Document a destination du jury / encadrant", size=9, color=MUTED)
 
-    # Abstract
-    pdf.h1("Resume / Abstract")
-    pdf.h2("Resume (FR)")
-    pdf.p(
-        "MyHeath est une plateforme de telemedecine orientee sante feminine et masculine, "
-        "avec suivi quotidien, diabete, cycle menstruel, messagerie chiffree, coach IA (Claude) "
-        "et console d'administration (utilisateurs, abonnements). Ce rapport presente la "
-        "version academique dont le backend est realise en ASP.NET Core 8 (C#), en conservant "
-        "React (Vite) et MongoDB. L'accent est mis sur l'architecture en couches, la securite "
-        "(JWT, BCrypt, AES-256-CBC), le deploiement Docker et les scenarios cloud (Vercel pour "
-        "le frontend, conteneurs pour l'API .NET)."
+
+def write_abstract(pdf: Thesis):
+    pdf._front_matter = True
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*NAVY)
+    pdf.cell(0, 10, T("Resume / Abstract"), ln=1)
+    pdf.set_draw_color(*TEAL)
+    pdf.line(pdf.l_margin, pdf.get_y(), pdf.l_margin + 40, pdf.get_y())
+    pdf.ln(8)
+
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(*TEAL)
+    pdf.cell(0, 8, T("Resume (FR)"), ln=1)
+    pdf.set_font("Helvetica", "", 10.5)
+    pdf.set_text_color(*TEXT)
+    pdf.multi_cell(
+        0,
+        6,
+        T(
+            "MyHeath est une plateforme de telemedecine orientee sante feminine et masculine, "
+            "avec suivi quotidien, diabete, cycle menstruel, messagerie chiffree, coach IA (Claude) "
+            "et console d'administration (utilisateurs, abonnements). Ce rapport presente la version "
+            "dont le backend est realise en ASP.NET Core 8 (C#), en conservant React (Vite) et MongoDB. "
+            "L'accent est mis sur l'architecture en couches, la securite (JWT, BCrypt, AES-256-CBC), "
+            "le deploiement Docker et les scenarios cloud (Vercel, Atlas, Azure)."
+        ),
+        align="J",
     )
-    pdf.h2("Abstract (EN)")
-    pdf.p(
-        "MyHeath is a telemedicine platform for women's and men's health tracking, diabetes "
-        "care, encrypted messaging, AI coaching, and admin subscriptions. This report documents "
-        "the ASP.NET Core 8 backend rewrite while keeping React and MongoDB, including Docker "
-        "deployment and cloud hosting considerations."
+    pdf.ln(8)
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(*TEAL)
+    pdf.cell(0, 8, T("Abstract (EN)"), ln=1)
+    pdf.set_font("Helvetica", "", 10.5)
+    pdf.set_text_color(*TEXT)
+    pdf.multi_cell(
+        0,
+        6,
+        T(
+            "MyHeath is a telemedicine platform for women's and men's health tracking, diabetes "
+            "care, encrypted messaging, AI coaching, and admin subscriptions. This report documents "
+            "the ASP.NET Core 8 backend rewrite while keeping React and MongoDB, including Docker "
+            "deployment and cloud hosting considerations."
+        ),
+        align="J",
     )
+    pdf.ln(10)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*NAVY)
+    pdf.cell(0, 8, T("Mots-cles"), ln=1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*SLATE)
+    pdf.multi_cell(
+        0,
+        6,
+        T(
+            "ASP.NET Core 8, React, MongoDB, Docker, JWT, AES-256, telemedecine, "
+            "FemTech, Claude AI, Vercel, Azure"
+        ),
+    )
+
+
+def write_toc(pdf: Thesis, toc_entries, page_offset: int):
+    """Render TOC using page numbers from pass 1, shifted by page_offset."""
+    pdf._front_matter = True
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*NAVY)
+    pdf.cell(0, 10, T("Table des matieres"), ln=1)
+    pdf.set_draw_color(*TEAL)
+    pdf.set_line_width(0.8)
+    pdf.line(pdf.l_margin, pdf.get_y(), pdf.l_margin + 50, pdf.get_y())
+    pdf.ln(10)
+
+    usable = pdf.w - pdf.l_margin - pdf.r_margin
+    for level, title, page in toc_entries:
+        display_page = page + page_offset
+        pdf.set_x(pdf.l_margin)
+        indent = 0 if level == 1 else 8
+        pdf.set_font("Helvetica", "B" if level == 1 else "", 11 if level == 1 else 10)
+        pdf.set_text_color(*NAVY if level == 1 else TEXT)
+
+        label = T(title)
+        page_str = str(display_page)
+        # dotted leader
+        max_w = usable - indent - 12
+        pdf.set_x(pdf.l_margin + indent)
+        # measure
+        tw = pdf.get_string_width(label)
+        pw = pdf.get_string_width(page_str)
+        dots_w = max_w - tw - pw - 2
+        dots = ""
+        if dots_w > 4:
+            n = int(dots_w / pdf.get_string_width("."))
+            dots = "." * max(n, 3)
+
+        pdf.cell(tw + 1, 8, label, border=0)
+        pdf.set_text_color(*MUTED)
+        pdf.cell(dots_w, 8, dots, border=0)
+        pdf.set_text_color(*NAVY if level == 1 else TEXT)
+        pdf.cell(pw + 2, 8, page_str, border=0, align="R", ln=1)
+        if level == 1:
+            pdf.ln(1)
+
+
+def write_body(pdf: Thesis):
+    """Main chapters — records TOC entries with page numbers."""
 
     pdf.h1("1. Introduction et contexte")
     pdf.h2("1.1 Problematique")
     pdf.p(
-        "L'acces a un suivi de sante continu (cycle, glycemie, bien-etre) reste fragmenté. "
-        "MyHeath centralise le parcours patient-medecin avec une API securisee et une UI moderne."
+        "L'acces a un suivi de sante continu (cycle, glycemie, bien-etre) reste fragmenté entre "
+        "applications isolees. MyHeath centralise le parcours patient-medecin-administrateur "
+        "autour d'une API securisee et d'une interface moderne type dashboard."
     )
     pdf.h2("1.2 Objectifs du projet")
     pdf.bullet("Construire une API REST professionnelle en ASP.NET Core 8")
     pdf.bullet("Conserver le frontend React existant (contrat /api compatible)")
-    pdf.bullet("Persister les donnees dans MongoDB (document-oriented)")
+    pdf.bullet("Persister les donnees dans MongoDB")
     pdf.bullet("Chiffrer les donnees sensibles (AES-256-CBC) et authentifier via JWT")
-    pdf.bullet("Ajouter des fonctions avancees: RDV, rappels medicaments, notifications, audit")
-    pdf.bullet("Documenter Docker et le deploiement")
-    pdf.h2("1.3 Pourquoi .NET cette annee")
+    pdf.bullet("Ajouter RDV, rappels medicaments, notifications et audit admin")
+    pdf.bullet("Documenter Docker et le deploiement cloud")
+    pdf.h2("1.3 Pourquoi ASP.NET Core")
     pdf.p(
-        "Le choix d'ASP.NET Core s'aligne sur les competences acquises en formation (C#, "
-        "Web API, middleware, DI, JWT). .NET 8 offre performances, typage fort, Swagger "
-        "natif et un excellent support Docker (images mcr.microsoft.com/dotnet)."
+        "Le choix d'ASP.NET Core s'aligne sur les competences acquises en formation (C#, Web API, "
+        "middleware, injection de dependances, JWT). .NET 8 offre performances, typage fort, "
+        "Swagger natif et un excellent support Docker (images officielles Microsoft)."
     )
 
     pdf.h1("2. Analyse des besoins")
     pdf.h2("2.1 Acteurs")
-    pdf.bullet("Patient (femme / homme): suivi, diabete, IA, RDV, medicaments")
-    pdf.bullet("Medecin: consultations, RDV, messagerie")
-    pdf.bullet("Administrateur: utilisateurs, plans, abonnements, audit")
+    pdf.table(
+        ["Acteur", "Responsabilites principales"],
+        [
+            ["Patient", "Suivi, diabete, IA, RDV, medicaments"],
+            ["Medecin", "Consultations, RDV, messagerie"],
+            ["Administrateur", "Users, plans, abonnements, audit"],
+        ],
+    )
     pdf.h2("2.2 Exigences fonctionnelles")
-    pdf.bullet("Auth (register/login), RBAC patient|doctor|admin")
+    pdf.bullet("Authentification (register/login) et RBAC patient | doctor | admin")
     pdf.bullet("Suivi quotidien + score predictif 0-100")
-    pdf.bullet("Gestion periodes / insights cycle")
-    pdf.bullet("Dossier de sante chiffre")
-    pdf.bullet("Chat chiffre patient-medecin")
+    pdf.bullet("Gestion des periodes / insights de cycle")
+    pdf.bullet("Dossier de sante chiffre et chat chiffre")
     pdf.bullet("AI Coach (Anthropic Claude)")
     pdf.bullet("Abonnements FREE / CARE / PREMIUM")
-    pdf.bullet("Rendez-vous telemedecine")
-    pdf.bullet("Rappels de medicaments + notifications")
+    pdf.bullet("Rendez-vous telemedecine et rappels medicaments")
     pdf.h2("2.3 Exigences non fonctionnelles")
-    pdf.bullet("Securite: JWT 7j, BCrypt cost 12, AES au repos")
+    pdf.bullet("Securite: JWT 7 jours, BCrypt cost 12, AES au repos")
     pdf.bullet("Portabilite: Docker Compose")
-    pdf.bullet("Maintenabilite: controllers / services / models")
+    pdf.bullet("Maintenabilite: Controllers / Services / Models")
     pdf.bullet("Observabilite: healthcheck + Swagger")
-    pdf.fig("fig_2_3_usecase.png", "Figure: diagramme de cas d'utilisation (MyHeath)")
+    pdf.fig("fig_2_3_usecase.png", "Figure 2.3 — Diagramme de cas d'utilisation")
 
     pdf.h1("3. Architecture technique")
     pdf.h2("3.1 Vue d'ensemble")
     pdf.p(
         "Architecture 3-tiers: React (presentation) -> ASP.NET Core Web API (metier) -> "
-        "MongoDB (persistance). Le frontend appelle VITE_API_URL (ex: http://localhost:5080/api)."
+        "MongoDB (persistance). Le frontend appelle VITE_API_URL "
+        "(exemple: http://localhost:5080/api)."
     )
-    pdf.fig("fig_2_1_architecture.png", "Figure: architecture logique 3-tiers")
-    pdf.h2("3.2 Stack")
-    pdf.bullet("Backend: ASP.NET Core 8, C#, MongoDB.Driver, JWT Bearer, BCrypt.Net-Next, Swashbuckle")
-    pdf.bullet("Frontend: React 18, Vite, Tailwind, Recharts, Axios")
-    pdf.bullet("Base: MongoDB 7 (local Docker) ou MongoDB Atlas")
-    pdf.bullet("IA: Anthropic Messages API (Claude)")
+    pdf.fig("fig_2_1_architecture.png", "Figure 2.1 — Architecture 3-tiers MyHeath")
+    pdf.h2("3.2 Stack technologique")
+    pdf.table(
+        ["Couche", "Technologies"],
+        [
+            ["Backend", "ASP.NET Core 8, C#, MongoDB.Driver, JWT, BCrypt"],
+            ["Frontend", "React 18, Vite, Tailwind, Recharts, Axios"],
+            ["Donnees", "MongoDB 7 (Docker) ou MongoDB Atlas"],
+            ["IA", "Anthropic Messages API (Claude)"],
+            ["Ops", "Docker Compose, Vercel, Azure (option)"],
+        ],
+    )
     pdf.h2("3.3 Structure du projet .NET")
     pdf.code(
         "backend-dotnet/\n"
         "  MyHeath.Api/\n"
-        "    Controllers/   Auth, Health, Suivi, Chat, Ai, Admin,\n"
-        "                   Appointments, Notifications, Medications\n"
+        "    Controllers/   Auth, Health, Suivi, Chat, Ai, Admin, RDV...\n"
         "    Models/        Entities (User, DailyHealthLog, ...)\n"
         "    Services/      Mongo, AES, JWT, Claude, Seed, HealthScore\n"
-        "    Program.cs     DI, CORS, Swagger, Auth\n"
+        "    Program.cs     DI, CORS, Swagger, Authentication\n"
         "  Dockerfile\n"
         "docker-compose.dotnet.yml"
     )
-    pdf.h2("3.4 Compatibilite avec l'ancien backend Node")
+    pdf.h2("3.4 Compatibilite avec le backend Node")
     pdf.p(
-        "Les routes REST restent sous /api/* avec les memes payloads JSON camelCase. "
-        "Le JWT porte la claim id; AES utilise iv_hex:ciphertext_hex (SHA-256 du secret). "
-        "Ainsi le meme frontend React peut basculer de Node (port 5000) vers .NET (port 5080)."
+        "Les routes REST restent sous /api/* avec des payloads JSON camelCase. "
+        "Le JWT porte la claim id; AES utilise le format iv_hex:ciphertext_hex. "
+        "Le meme frontend React peut basculer de Node (port 5000) vers .NET (port 5080)."
     )
 
     pdf.h1("4. Conception detaillee")
@@ -221,50 +408,58 @@ def build():
     pdf.bullet("users, healthrecords, symptomlogs, dailyhealthlogs, messages")
     pdf.bullet("subscriptionplans, usersubscriptions")
     pdf.bullet("appointments, appnotifications, medicationreminders, auditlogs")
-    pdf.fig("fig_2_6_class.png", "Figure: modele de classes / domaines")
+    pdf.fig("fig_2_6_class.png", "Figure 2.6 — Modele de domaines (extrait)")
     pdf.h2("4.2 Securite AES-256-CBC")
     pdf.p(
         "Les champs sensibles du dossier medical et le contenu des messages sont chiffres "
-        "avec AES-256-CBC. La cle derive d'un secret via SHA-256, comme dans l'implementation Node, "
-        "pour permettre l'interoperabilite des documents existants."
+        "avec AES-256-CBC. La cle derive d'un secret via SHA-256, comme dans l'implementation "
+        "Node, pour permettre l'interoperabilite des documents existants."
     )
-    pdf.fig("fig_2_7_aes.png", "Figure: chiffrement des donnees de sante")
+    pdf.fig("fig_2_7_aes.png", "Figure 2.7 — Chiffrement AES-256-CBC")
     pdf.h2("4.3 Analyse predictive")
     pdf.p(
-        "Le service HealthScoreService calcule un score 0-100 a partir du sommeil, stress, "
-        "activite, humeur et glycemie. CycleAnalyzer estime phase, ovulation et anomalies."
+        "HealthScoreService calcule un score 0-100 a partir du sommeil, stress, activite, "
+        "humeur et glycemie. CycleAnalyzer estime la phase, l'ovulation et les anomalies."
     )
-    pdf.fig("fig_2_8_predictive.png", "Figure: pipeline predictif")
+    pdf.fig("fig_2_8_predictive.png", "Figure 2.8 — Pipeline predictif")
 
     pdf.h1("5. Realisation backend .NET")
     pdf.h2("5.1 Authentification")
     pdf.p(
-        "AuthController expose register/login/me/doctors/assign-doctor. Les mots de passe "
-        "sont hashes avec BCrypt (work factor 12). JwtTokenService emet un token HMAC-SHA256 "
-        "valide 7 jours. Les controllers utilisent [Authorize(Roles=...)]."
+        "AuthController expose register, login, me, doctors et assign-doctor. "
+        "Les mots de passe sont hashes avec BCrypt (work factor 12). "
+        "JwtTokenService emet un token HMAC-SHA256 valide 7 jours."
     )
+    pdf.fig("fig_2_4_sequence_login.png", "Figure 2.4 — Sequence d'authentification")
     pdf.h2("5.2 Modules metier")
     pdf.bullet("HealthController: symptomes, periodes, insights, dossier chiffre")
     pdf.bullet("SuiviController: daily upsert, tendance, diabete")
-    pdf.bullet("ChatController: partenaires + messages chiffres")
+    pdf.bullet("ChatController: partenaires et messages chiffres")
     pdf.bullet("AiController: chat, coach-plan, wellness, doctor-brief")
     pdf.bullet("AdminController: users, plans, subscriptions, audit")
-    pdf.h2("5.3 Enhancements")
-    pdf.bullet("Appointments: reservation video/chat/presentiel + notifications")
-    pdf.bullet("Medications: rappels horaires pour adherence therapeutique")
-    pdf.bullet("Notifications: centre d'alertes in-app")
-    pdf.bullet("AuditLog: trace des actions admin")
-    pdf.bullet("Swagger UI: documentation interactive /swagger")
-    pdf.fig("fig_3_1_backend.png", "Figure: organisation backend")
-    pdf.fig("fig_3_3_routes.png", "Figure: cartographie des routes API")
+    pdf.fig("fig_2_5_sequence_insights.png", "Figure 2.5 — Sequence insights cycle")
+    pdf.h2("5.3 Fonctionnalites ajoutees")
+    pdf.table(
+        ["Fonctionnalite", "Endpoint"],
+        [
+            ["Rendez-vous", "/api/appointments"],
+            ["Notifications", "/api/notifications"],
+            ["Rappels medicaments", "/api/medications"],
+            ["Audit admin", "/api/admin/audit"],
+            ["Swagger / OpenAPI", "/swagger"],
+        ],
+    )
+    pdf.fig("fig_3_1_backend.png", "Figure 3.1 — Organisation backend ASP.NET Core")
+    pdf.fig("fig_3_3_routes.png", "Figure 3.3 — Cartographie des routes API")
+    pdf.fig("fig_2_9_ai.png", "Figure 2.9 — Integration AI Coach (Claude)")
 
     pdf.h1("6. Frontend React")
     pdf.p(
-        "Le frontend conserve Vite/React/Tailwind avec un layout dashboard (sidebar). "
+        "Le frontend conserve Vite, React et Tailwind avec un layout dashboard a sidebar. "
         "Les pages Appointments et Medications consomment les nouvelles routes .NET. "
         "La variable VITE_API_URL selectionne le backend (Node ou .NET)."
     )
-    pdf.bullet("Admin console: Overview, Users, Subscriptions, Plans")
+    pdf.bullet("Admin: Overview, Users, Subscriptions, Plans")
     pdf.bullet("Patient: Suivi, Period, Diabetes, Medications, AI Coach, Records")
     pdf.bullet("Commun: Appointments, Consult (chat)")
 
@@ -273,38 +468,43 @@ def build():
     pdf.p(
         "Le Dockerfile multi-stage utilise le SDK .NET 8 pour publier l'API, puis l'image "
         "runtime aspnet:8.0 pour executer MyHeath.Api.dll sur le port 5080. "
-        "docker-compose.dotnet.yml orchestre mongodb + backend-dotnet + frontend."
+        "Le fichier docker-compose.dotnet.yml orchestre mongodb, backend-dotnet et frontend."
     )
     pdf.code(
         "docker compose -f docker-compose.dotnet.yml up --build\n"
-        "# API  http://localhost:5080/api/healthcheck\n"
+        "# API     http://localhost:5080/api/healthcheck\n"
         "# Swagger http://localhost:5080/swagger\n"
-        "# UI   http://localhost:5173"
+        "# UI      http://localhost:5173"
     )
+    pdf.fig("fig_2_2_deployment.png", "Figure 2.2 — Topologie de deploiement")
     pdf.h2("7.2 Variables d'environnement")
     pdf.bullet("MONGODB_URI / MONGODB_DATABASE")
     pdf.bullet("JWT_SECRET / AES_SECRET_KEY")
     pdf.bullet("CLIENT_URL (CORS)")
-    pdf.bullet("ANTHROPIC_API_KEY / ANTHROPIC_MODEL")
+    pdf.bullet("ANTHROPIC_API_KEY / ANTHROPIC_MODEL (optionnel)")
     pdf.bullet("PORT=5080")
     pdf.h2("7.3 Deploiement cloud")
     pdf.p(
         "Frontend: Vercel (build Vite, VITE_API_URL vers l'API publique). "
         "API .NET: Azure App Service, Railway, Render (Docker), ou VM avec Docker Compose. "
-        "MongoDB: Atlas (URI srv) en production. Les secrets ne doivent jamais etre commits."
+        "MongoDB: Atlas en production. Les secrets ne doivent jamais etre commits dans Git."
     )
-    pdf.fig("fig_2_2_deployment.png", "Figure: vue deploiement")
     pdf.h2("7.4 Pipeline recommande")
-    pdf.bullet("CI: build docker image + tests smoke /api/healthcheck")
-    pdf.bullet("CD: push image registry -> deploy App Service / Compose")
-    pdf.bullet("Frontend: vercel --prod apres mise a jour VITE_API_URL")
+    pdf.bullet("CI: build image Docker + smoke test /api/healthcheck")
+    pdf.bullet("CD: push registry puis deploy App Service / Compose")
+    pdf.bullet("Frontend: vercel --prod apres mise a jour de VITE_API_URL")
 
     pdf.h1("8. Tests et comptes de demonstration")
-    pdf.p("Au demarrage, SeedService cree les comptes et plans si absents.")
-    pdf.bullet("admin@myheath.app / Admin123")
-    pdf.bullet("doctor@myheath.app / Doctor123")
-    pdf.bullet("patient@myheath.app / Patient123 (Care)")
-    pdf.bullet("man@myheath.app / Patient123 (Premium)")
+    pdf.p("Au demarrage, SeedService cree les comptes et plans s'ils sont absents.")
+    pdf.table(
+        ["Role", "Email", "Mot de passe"],
+        [
+            ["Admin", "admin@myheath.app", "Admin123"],
+            ["Medecin", "doctor@myheath.app", "Doctor123"],
+            ["Patient F", "patient@myheath.app", "Patient123"],
+            ["Patient H", "man@myheath.app", "Patient123"],
+        ],
+    )
     pdf.h2("8.1 Scenarios de validation")
     pdf.bullet("Login admin -> console -> assigner un abonnement")
     pdf.bullet("Patient -> suivi quotidien -> score")
@@ -316,130 +516,48 @@ def build():
     pdf.h1("9. Comparaison Node.js vs ASP.NET Core")
     pdf.p(
         "Les deux backends exposent le meme contrat API. Node (Express) reste utile pour "
-        "Socket.io temps reel local; .NET apporte typage fort, DI native, Swagger, et une "
-        "base solide pour extensions entreprise (policies, health checks, Azure)."
+        "un prototypage rapide et un deploiement serverless Vercel; .NET apporte typage fort, "
+        "DI native, Swagger et une base solide pour des extensions entreprise."
     )
-    pdf.bullet("Node: prototypage rapide, Vercel serverless deja en place")
-    pdf.bullet(".NET: architecture layers, performances, competences academiques C#")
+    pdf.table(
+        ["Critere", "Node.js", "ASP.NET Core"],
+        [
+            ["Langage", "JavaScript", "C#"],
+            ["Typage", "Dynamique", "Fort / compile"],
+            ["Docs API", "Manuelle", "Swagger integre"],
+            ["Docker", "node:alpine", "mcr.microsoft.com/dotnet"],
+            ["PFE", "MERN classique", "Stack enseignee (.NET)"],
+        ],
+    )
 
-    pdf.h1("10. Conclusion et perspectives")
-    pdf.p(
-        "Ce PFE demontre la migration d'une API telemedecine vers ASP.NET Core 8 tout en "
-        "preservant React et MongoDB, avec Docker et une strategie de deploiement claire. "
-        "Perspectives: SignalR pour le chat temps reel, paiements abonnements, app mobile, "
-        "et audits de conformite Loi 09-08 / RGPD enrichis."
-    )
-    pdf.h2("Livrables")
-    pdf.bullet("Code: backend-dotnet/, frontend/, docker-compose.dotnet.yml")
-    pdf.bullet("Rapport: docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf")
-    pdf.bullet("API docs: /swagger")
-
-    # pad content for length
-    pdf.h1("11. Securite approfondie")
-    pdf.h2("11.1 Surface d'attaque")
-    pdf.p(
-        "Les principaux risques concernent l'usurpation de session JWT, l'acces croise "
-        "aux dossiers patients, et l'exposition de secrets (cles AES, Anthropic). "
-        "Les controllers verifient systematiquement le role et l'appartenance des ressources."
-    )
-    pdf.h2("11.2 Contre-mesures")
-    for _ in range(2):
-        pdf.bullet("HTTPS obligatoire en production (TLS termine par reverse proxy / Azure)")
-        pdf.bullet("Secrets injectes via variables d'environnement, jamais dans Git")
-        pdf.bullet("CORS restreint a CLIENT_URL + domaine Vercel")
-        pdf.bullet("Validation des DTO et longueurs maximales sur les prompts IA")
-        pdf.bullet("Desactivation douce des utilisateurs (isActive) plutot que suppression dure")
-    pdf.h2("11.3 Conformite")
+    pdf.h1("10. Securite")
+    pdf.h2("10.1 Contre-mesures")
+    pdf.bullet("HTTPS obligatoire en production")
+    pdf.bullet("Secrets via variables d'environnement (jamais dans Git)")
+    pdf.bullet("CORS restreint a CLIENT_URL + domaine frontend")
+    pdf.bullet("Validation des DTO et limitation de taille des prompts IA")
+    pdf.bullet("Desactivation douce des utilisateurs (isActive)")
+    pdf.h2("10.2 Conformite")
     pdf.p(
         "Le chiffrement au repos des notes cliniques et messages s'aligne sur les bonnes "
-        "pratiques Loi 09-08 (Maroc) et les principes RGPD (minimisation, integrite, "
-        "confidentialite). L'IA affiche un disclaimer non diagnostique."
+        "pratiques Loi 09-08 (Maroc) et les principes RGPD. L'IA affiche un disclaimer "
+        "non diagnostique."
     )
 
-    pdf.h1("12. Scenarios UML (narratifs)")
-    pdf.h2("12.1 Sequence login")
+    pdf.h1("11. Conclusion et perspectives")
     pdf.p(
-        "Le client POST /api/auth/login -> AuthController verifie BCrypt -> JwtTokenService "
-        "emet le token -> le frontend stocke myheath_token et appelle /api/auth/me."
+        "Ce PFE demontre la realisation d'une API telemedecine en ASP.NET Core 8 tout en "
+        "preservant React et MongoDB, avec Docker et une strategie de deploiement claire. "
+        "Perspectives: SignalR pour le chat temps reel, paiements d'abonnements, "
+        "application mobile, et audits de conformite enrichis."
     )
-    pdf.fig("fig_2_4_sequence_login.png", "Figure: sequence d'authentification")
-    pdf.h2("12.2 Sequence insights")
-    pdf.p(
-        "Le patient GET /api/health/insights -> chargement SymptomLog -> CycleAnalyzer -> "
-        "reponse JSON (phase, ovulation, anomalies)."
-    )
-    pdf.fig("fig_2_5_sequence_insights.png", "Figure: sequence calcul d'insights")
-    pdf.h2("12.3 Sequence AI Coach")
-    pdf.p(
-        "Le patient POST /api/ai/coach-plan -> contexte DailyHealthLog 7j -> ClaudeService "
-        "appelle Anthropic -> plan retourne avec disclaimer."
-    )
-    pdf.fig("fig_2_9_ai.png", "Figure: integration IA Claude")
+    pdf.h2("11.1 Livrables")
+    pdf.bullet("Code: backend-dotnet/, frontend/, docker-compose.dotnet.yml")
+    pdf.bullet("Rapport: docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf")
+    pdf.bullet("Guide jury: GUIDE_INSTALLATION.md")
+    pdf.bullet("Depot public: https://github.com/salahEddine-Admou/MyHeath")
 
-    pdf.h1("13. Guide operateur Docker (detail)")
-    pdf.h2("13.1 Prerequis")
-    pdf.bullet("Docker Desktop 4.x ou Docker Engine + Compose v2")
-    pdf.bullet("8 Go RAM recommandes pour build SDK .NET")
-    pdf.bullet("Ports libres: 27017, 5080, 5173")
-    pdf.h2("13.2 Commandes utiles")
-    pdf.code(
-        "docker compose -f docker-compose.dotnet.yml build --no-cache\n"
-        "docker compose -f docker-compose.dotnet.yml up -d\n"
-        "docker compose -f docker-compose.dotnet.yml logs -f backend-dotnet\n"
-        "docker compose -f docker-compose.dotnet.yml down -v"
-    )
-    pdf.h2("13.3 Depannage")
-    for i in range(1, 8):
-        pdf.bullet(
-            f"Cas {i}: si healthcheck echoue, tester curl http://localhost:5080/api/healthcheck "
-            "et inspecter MONGODB_URI / firewall."
-        )
-    pdf.p(
-        "Le volume mongo_data_dotnet persiste les documents entre redemarrages. "
-        "Pour reinitialiser le seed, supprimer le volume (-v) puis relancer."
-    )
-
-    pdf.h1("14. Deploiement Azure (scenario)")
-    pdf.p(
-        "Scenario recommande pour une soutenance professionnelle: "
-        "Azure Container Registry + Azure App Service (Linux container) pour l'API, "
-        "MongoDB Atlas M0/M10, frontend Vercel. Les App Settings Azure mappent les memes "
-        "variables que Compose (JWT_SECRET, AES_SECRET_KEY, MONGODB_URI, ANTHROPIC_API_KEY)."
-    )
-    for i in range(1, 10):
-        pdf.bullet(f"Etape Azure {i}: configurer App Setting puis redemarrer le conteneur API")
-    pdf.p(
-        "Le healthcheck /api/healthcheck peut etre branche sur Azure Health Check path "
-        "pour le recyclage automatique en cas d'echec."
-    )
-
-    pdf.h1("15. Plan de tests")
-    pdf.h2("15.1 Tests fonctionnels")
-    for role in ("Admin", "Medecin", "Patient femme", "Patient homme"):
-        pdf.bullet(f"Parcours {role}: login, navigation sidebar, actions metier, logout")
-    pdf.h2("15.2 Tests API (Swagger)")
-    pdf.p(
-        "Swagger permet d'executer les endpoints avec Authorize Bearer. "
-        "Verifier les codes 401/403 sur les routes protegees."
-    )
-    for ep in (
-        "GET /api/healthcheck",
-        "POST /api/auth/login",
-        "GET /api/admin/overview",
-        "POST /api/suivi/daily",
-        "GET /api/appointments",
-        "POST /api/medications",
-        "GET /api/notifications",
-        "POST /api/ai/chat",
-    ):
-        pdf.bullet(f"Smoke: {ep}")
-    pdf.h2("15.3 Criteres d'acceptation")
-    pdf.bullet("Aucun secret dans le depot Git")
-    pdf.bullet("Compose up demarre les 3 services sans erreur fatale")
-    pdf.bullet("Frontend affiche dashboard apres login")
-    pdf.bullet("Messages et dossier restent lisibles apres chiffrement/dechiffrement")
-
-    pdf.h1("Annexe A - Exemples de requetes")
+    pdf.h1("Annexe A — Exemples de requetes")
     pdf.code(
         "POST /api/auth/login\n"
         '{ "email": "patient@myheath.app", "password": "Patient123" }\n\n'
@@ -448,45 +566,60 @@ def build():
         "POST /api/appointments\n"
         '{ "doctorId": "...", "scheduledAt": "2026-08-01T10:00:00Z", "mode": "video" }'
     )
-    pdf.h1("Annexe B - Checklist Docker")
-    for i in range(1, 16):
-        pdf.bullet(f"Checklist {i}: verifier logs du service backend-dotnet apres compose up")
-    pdf.p(
-        "En cas d'echec de connexion Mongo, verifier le hostname mongodb dans le reseau "
-        "Compose et l'URI MONGODB_URI=mongodb://mongodb:27017."
-    )
-    pdf.h1("Annexe C - Glossaire")
+
+    pdf.h1("Annexe B — Checklist Docker")
+    pdf.bullet("Installer et demarrer Docker Desktop")
+    pdf.bullet("Cloner le depot GitHub MyHeath")
+    pdf.bullet("Executer: docker compose -f docker-compose.dotnet.yml up --build")
+    pdf.bullet("Verifier http://localhost:5080/api/healthcheck")
+    pdf.bullet("Ouvrir http://localhost:5173 et se connecter")
+    pdf.bullet("En cas d'echec Mongo: verifier MONGODB_URI=mongodb://mongodb:27017")
+
+    pdf.h1("Annexe C — Glossaire")
     for term, defn in [
         ("JWT", "JSON Web Token pour sessions API"),
         ("AES", "Advanced Encryption Standard"),
         ("RBAC", "Role-Based Access Control"),
-        ("MRR", "Monthly Recurring Revenue (abonnements)"),
+        ("MRR", "Monthly Recurring Revenue"),
         ("DI", "Dependency Injection (.NET)"),
         ("Swagger", "Documentation OpenAPI interactive"),
         ("Atlas", "MongoDB Database-as-a-Service"),
-        ("Vercel", "Hebergement frontend JAMstack"),
         ("Compose", "Orchestration multi-conteneurs Docker"),
-        ("SignalR", "Perspective temps reel .NET (evolution chat)"),
     ]:
         pdf.bullet(f"{term}: {defn}")
-    pdf.h1("Annexe D - Bibliographie / references techniques")
-    refs = [
-        "Microsoft Learn - ASP.NET Core 8 documentation",
-        "MongoDB C# Driver documentation",
-        "OWASP ASVS - authentication & cryptography chapters",
-        "Anthropic API - Messages endpoint",
-        "Docker multi-stage builds best practices",
-        "Loi 09-08 relative a la protection des personnes physiques (Maroc)",
-        "RGPD - principes de minimisation et securite des traitements",
-    ]
-    for r in refs:
-        pdf.bullet(r)
-        pdf.p("Reference utilisee pour justifier les choix d'architecture et de securite du PFE MyHeath .NET.")
 
+
+def build():
+    # ---- Pass 1: collect TOC page numbers (no TOC pages yet) ----
+    p1 = Thesis()
+    write_cover(p1)
+    write_abstract(p1)
+    # marker: body starts after front pages without TOC
+    front_without_toc = p1.page_no()
+    write_body(p1)
+    toc_entries = list(p1._toc)
+
+    # Reserve 2 pages for TOC so numbering stays stable
+    toc_pages = 2
+    page_offset = toc_pages
+
+    # ---- Pass 2: final document ----
+    pdf = Thesis()
+    write_cover(pdf)
+    write_abstract(pdf)
+    write_toc(pdf, toc_entries, page_offset=page_offset)
+    # Pad to exactly cover + abstract + toc_pages before body starts
+    target_front = front_without_toc + toc_pages
+    while pdf.page_no() < target_front:
+        pdf.add_page()
+        pdf._front_matter = True
+
+    write_body(pdf)
 
     out = OUT / "RAPPORT_PFE_MYHEATH_DOTNET.pdf"
     pdf.output(str(out))
     print("Wrote", out, "pages=", pdf.page_no())
+    print("TOC entries:", len(toc_entries))
 
 
 if __name__ == "__main__":
