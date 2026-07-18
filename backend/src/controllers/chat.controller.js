@@ -54,6 +54,15 @@ exports.getPartners = async (req, res) => {
       return res.json({ partners: patients });
     }
 
+    if (req.user.role === 'admin') {
+      const partners = await User.find({
+        _id: { $ne: req.user._id },
+        isActive: true,
+        role: { $in: ['doctor', 'patient'] },
+      }).select('firstName lastName email role specialty');
+      return res.json({ partners });
+    }
+
     res.json({ partners: [] });
   } catch (error) {
     res.status(500).json({ message: 'Failed to load chat partners' });

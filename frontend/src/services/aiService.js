@@ -13,3 +13,5 @@ export const aiWellnessPlan = () => api.post('/ai/wellness-plan');
 
 export const aiAskDoctor = (concern) =>
   api.post('/ai/ask-doctor', { concern });
+
+export const aiCoachPlan = () => api.post('/ai/coach-plan');

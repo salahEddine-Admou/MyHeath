@@ -9,6 +9,7 @@ import {
   Loader2,
   ShieldAlert,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import {
   aiChat,
   aiDoctorBrief,
@@ -16,22 +17,34 @@ import {
   aiAskDoctor,
   aiExplainInsights,
   aiParseSymptoms,
+  aiCoachPlan,
 } from '../services/aiService';
 import { logSymptom } from '../services/healthService';
 
-const QUICK = [
-  { label: 'Explain my cycle', action: 'explain' },
-  { label: 'Today wellness plan', action: 'wellness' },
-  { label: 'Prepare my visit', action: 'prep' },
-  { label: 'Doctor brief', action: 'brief' },
-];
-
 export default function AiCompanion() {
+  const { user } = useAuth();
+  const isMan = user?.gender === 'man';
+
+  const QUICK = isMan
+    ? [
+        { label: 'Coach day plan', action: 'coach' },
+        { label: 'Explain my scores', action: 'explain' },
+        { label: 'Recovery tips', action: 'wellness' },
+        { label: 'Doctor brief', action: 'brief' },
+      ]
+    : [
+        { label: 'Coach day plan', action: 'coach' },
+        { label: 'Explain my cycle', action: 'explain' },
+        { label: 'Today wellness plan', action: 'wellness' },
+        { label: 'Doctor brief', action: 'brief' },
+      ];
+
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content:
-        "Hi, I'm **Heath** — your MyHeath AI companion. I can use your encrypted cycle history to explain insights, prepare consultations, or turn free text into a structured symptom log.\n\nHow can I help?",
+      content: isMan
+        ? "Hi, I'm **Heath** — your MyHeath AI Coach for men. I can use your daily suivi, training/recovery and diabetes logs to guide habits (not diagnose).\n\nHow can I help?"
+        : "Hi, I'm **Heath** — your MyHeath AI Coach for women. I can use your cycle, daily suivi and diabetes context to guide habits (not diagnose).\n\nHow can I help?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -76,9 +89,17 @@ export default function AiCompanion() {
     setPanel(null);
     try {
       if (action === 'explain') {
-        push('user', 'Explain my cycle insights.');
+        push('user', isMan ? 'Explain my recent health scores.' : 'Explain my cycle insights.');
         const { data } = await aiExplainInsights();
         push('assistant', data.explanation);
+      } else if (action === 'coach') {
+        push('user', 'Build my AI Coach plan for today.');
+        const { data } = await aiCoachPlan();
+        setPanel({ type: 'coach', data: data.plan });
+        push(
+          'assistant',
+          `Coach plan ready: **${data.plan.headline}** (${data.plan.healthVerdict}). See the side panel.`
+        );
       } else if (action === 'wellness') {
         push('user', 'Create my wellness plan for today.');
         const { data } = await aiWellnessPlan();
@@ -281,6 +302,7 @@ export default function AiCompanion() {
           {panel?.type === 'wellness' && <WellnessCard plan={panel.data} />}
           {panel?.type === 'prep' && <PrepCard prep={panel.data} />}
           {panel?.type === 'brief' && <BriefCard brief={panel.data} />}
+          {panel?.type === 'coach' && <CoachCard plan={panel.data} />}
 
           {!panel && (
             <div className="bg-gradient-to-br from-rose-600 to-rose-800 text-white rounded-2xl p-5">
@@ -310,6 +332,26 @@ function formatMdLite(text) {
     }
     return <span key={i}>{p}</span>;
   });
+}
+
+function CoachCard({ plan }) {
+  return (
+    <div className="bg-white/80 border border-rose-100 rounded-2xl p-4 space-y-3">
+      <h3 className="font-display text-lg flex items-center gap-2">
+        <Sparkles className="w-5 h-5 text-rose-600" /> {plan.headline}
+      </h3>
+      <p className="text-xs uppercase text-rose-600">Verdict: {plan.healthVerdict}</p>
+      <List title="Focus" items={plan.focus} />
+      <List title="Morning" items={plan.morning} />
+      <List title="Afternoon" items={plan.afternoon} />
+      <List title="Evening" items={plan.evening} />
+      <List title="Diabetes tips" items={plan.diabetesTips} />
+      <List title="For you" items={plan.genderTips} />
+      <p className="text-sm italic text-ink-500 border-t border-rose-100 pt-2">
+        “{plan.motivation}”
+      </p>
+    </div>
+  );
 }
 
 function WellnessCard({ plan }) {

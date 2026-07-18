@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const ROLES = ['patient', 'doctor', 'admin'];
+const GENDERS = ['woman', 'man'];
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,14 +17,19 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: true, minlength: 6, select: false },
     role: { type: String, enum: ROLES, default: 'patient' },
+    gender: { type: String, enum: GENDERS, default: 'woman' },
+    hasDiabetes: { type: Boolean, default: false },
+    diabetesType: {
+      type: String,
+      enum: ['none', 'type1', 'type2', 'gestational', 'prediabetes', ''],
+      default: 'none',
+    },
     phone: { type: String, default: '' },
-    // Médecin assigné (pour patientes)
     assignedDoctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
     },
-    // Spécialité (pour médecins)
     specialty: { type: String, default: '' },
     dateOfBirth: { type: Date },
     isActive: { type: Boolean, default: true },
@@ -48,6 +54,9 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     lastName: this.lastName,
     email: this.email,
     role: this.role,
+    gender: this.gender,
+    hasDiabetes: this.hasDiabetes,
+    diabetesType: this.diabetesType,
     phone: this.phone,
     assignedDoctor: this.assignedDoctor,
     specialty: this.specialty,
@@ -58,3 +67,4 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
 
 module.exports = mongoose.model('User', userSchema);
 module.exports.ROLES = ROLES;
+module.exports.GENDERS = GENDERS;

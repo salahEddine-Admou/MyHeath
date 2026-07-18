@@ -76,7 +76,8 @@ export default function Login() {
           </Link>
         </p>
         <p className="mt-3 text-xs text-ink-300 text-center">
-          Demo: patient@myheath.app / Patient123 · doctor@myheath.app / Doctor123
+          Demo: patient@myheath.app / Patient123 (woman) · man@myheath.app / Patient123 ·
+          doctor@myheath.app / Doctor123
         </p>
       </form>
     </div>

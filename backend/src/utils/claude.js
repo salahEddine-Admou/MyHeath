@@ -1,19 +1,36 @@
 /**
- * Anthropic Claude client — MyHeath health assistant.
+ * Anthropic Claude client — MyHeath AI Coach (women & men).
  */
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
-const SYSTEM_BASE = `You are Heath, the AI assistant for MyHeath — a FemTech telemedicine and women's health tracking platform.
+const SYSTEM_BASE = `You are Heath, the AI Coach for MyHeath — a telemedicine and personal health tracking platform for women and men.
 
 STRICT rules:
 - Reply in clear, warm, professional English.
-- You are NOT a doctor: never give a definitive diagnosis.
-- You may explain concepts (cycle, PCOS, endometriosis) in an educational way.
-- For alarming signals (extreme pain, heavy bleeding, pregnancy risk, suicidal thoughts), advise seeking emergency care / a clinician immediately.
+- You are NOT a doctor: never give a definitive diagnosis or prescribe drugs.
+- Adapt advice to the user's gender profile and goals (cycle health for women; training/recovery/cardio habits for men; diabetes care support when relevant).
+- For alarming signals (chest pain, severe hypo/hyperglycemia, suicidal thoughts, heavy bleeding, fainting), advise emergency / clinician care immediately.
 - Encourage human consultation via MyHeath when relevant.
-- Be concise and useful; use short lists when helpful.
-- Respect privacy: do not ask for unnecessary personal identity details.`;
+- Be concise and actionable; short lists are welcome.
+- Respect privacy.`;
+
+function systemForUser(user) {
+  const gender = user?.gender === 'man' ? 'man' : 'woman';
+  const diabetes = user?.hasDiabetes
+    ? `User manages diabetes (${user.diabetesType || 'unspecified'}). Support glucose logging habits, food timing education, and medication adherence reminders without prescribing.`
+    : 'User does not have a diabetes profile enabled (still may log glucose occasionally).';
+
+  const focus =
+    gender === 'man'
+      ? 'Focus areas: sleep, stress, training load vs recovery, hydration, heart-healthy habits, mental load.'
+      : 'Focus areas: menstrual cycle awareness, energy across phases, PCOS/endometriosis educational caution, sleep, stress, hydration.';
+
+  return `${SYSTEM_BASE}
+
+User profile: gender=${gender}. ${diabetes}
+${focus}`;
+}
 
 async function callClaude({ system, messages, maxTokens = 1200, temperature = 0.6 }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -70,6 +87,7 @@ function extractJson(text) {
 
 module.exports = {
   SYSTEM_BASE,
+  systemForUser,
   callClaude,
   extractJson,
 };

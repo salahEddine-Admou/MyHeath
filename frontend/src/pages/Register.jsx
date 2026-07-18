@@ -12,16 +12,26 @@ export default function Register() {
     email: '',
     password: '',
     role: 'patient',
+    gender: 'woman',
+    hasDiabetes: false,
+    diabetesType: 'type2',
     specialty: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm((f) => ({ ...f, [k]: value }));
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (form.role === 'patient' && !form.gender) {
+      setError('Please choose woman or man');
+      return;
+    }
     setLoading(true);
     try {
       await register(form);
@@ -74,11 +84,59 @@ export default function Register() {
           className="input mb-4"
         />
 
+        <label className="block text-sm mb-1">I am</label>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {[
+            { id: 'woman', label: 'Woman', hint: 'Cycle · PCOS alerts' },
+            { id: 'man', label: 'Man', hint: 'Training · recovery' },
+          ].map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, gender: g.id }))}
+              className={`text-left px-3 py-3 rounded-xl border transition ${
+                form.gender === g.id
+                  ? 'border-rose-600 bg-rose-50 text-rose-900'
+                  : 'border-rose-200 hover:bg-rose-50/50'
+              }`}
+            >
+              <span className="font-medium block">{g.label}</span>
+              <span className="text-xs text-ink-500">{g.hint}</span>
+            </button>
+          ))}
+        </div>
+
         <label className="block text-sm mb-1">Profile</label>
         <select value={form.role} onChange={set('role')} className="input mb-4">
           <option value="patient">Patient</option>
           <option value="doctor">Doctor</option>
         </select>
+
+        {form.role === 'patient' && (
+          <label className="flex items-start gap-2 mb-4 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={form.hasDiabetes}
+              onChange={set('hasDiabetes')}
+              className="mt-1 accent-rose-600"
+            />
+            <span>
+              I want diabetes tracking
+              {form.hasDiabetes && (
+                <select
+                  value={form.diabetesType}
+                  onChange={set('diabetesType')}
+                  className="input mt-2"
+                >
+                  <option value="type1">Type 1</option>
+                  <option value="type2">Type 2</option>
+                  <option value="gestational">Gestational</option>
+                  <option value="prediabetes">Prediabetes</option>
+                </select>
+              )}
+            </span>
+          </label>
+        )}
 
         {form.role === 'doctor' && (
           <>
@@ -86,7 +144,7 @@ export default function Register() {
             <input
               value={form.specialty}
               onChange={set('specialty')}
-              placeholder="Gynecology"
+              placeholder={form.gender === 'man' ? 'General medicine' : 'Gynecology'}
               className="input mb-4"
             />
           </>

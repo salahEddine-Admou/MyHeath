@@ -8,6 +8,12 @@ import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import HealthRecord from './pages/HealthRecord';
 import AiCompanion from './pages/AiCompanion';
+import PeriodManagement from './pages/PeriodManagement';
+import HealthSuivi from './pages/HealthSuivi';
+import DiabetesCare from './pages/DiabetesCare';
+import Admin from './pages/Admin';
+import Appointments from './pages/Appointments';
+import Medications from './pages/Medications';
 
 function PrivateRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -60,11 +66,71 @@ export default function App() {
         }
       />
       <Route
+        path="/suivi"
+        element={
+          <PrivateRoute roles={['patient']}>
+            <Layout>
+              <HealthSuivi />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/diabetes"
+        element={
+          <PrivateRoute roles={['patient']}>
+            <Layout>
+              <DiabetesCare />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/period"
+        element={
+          <PrivateRoute roles={['patient']}>
+            <Layout>
+              <PeriodManagement />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/dossier"
         element={
           <PrivateRoute roles={['patient']}>
             <Layout>
               <HealthRecord />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <PrivateRoute roles={['admin']}>
+            <Layout>
+              <Admin />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/appointments"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Appointments />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/medications"
+        element={
+          <PrivateRoute roles={['patient']}>
+            <Layout>
+              <Medications />
             </Layout>
           </PrivateRoute>
         }

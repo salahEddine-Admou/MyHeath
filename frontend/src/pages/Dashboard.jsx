@@ -10,7 +10,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { AlertTriangle, Calendar, Droplets, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getInsights,
@@ -33,6 +33,7 @@ const SYMPTOM_OPTIONS = [
 
 export default function Dashboard() {
   const { user, refreshUser } = useAuth();
+  const isMan = user?.gender === 'man';
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState([]);
@@ -53,12 +54,14 @@ export default function Dashboard() {
     setLoading(true);
     try {
       if (user?.role === 'patient') {
-        const [{ data }, docs] = await Promise.all([
-          getInsights(),
-          getDoctors().catch(() => ({ data: { doctors: [] } })),
-        ]);
-        setInsights(data.insights);
+        const docs = await getDoctors().catch(() => ({ data: { doctors: [] } }));
         setDoctors(docs.data.doctors || []);
+        if (!isMan) {
+          const { data } = await getInsights();
+          setInsights(data.insights);
+        } else {
+          setInsights(null);
+        }
       } else {
         setInsights(null);
       }
@@ -71,7 +74,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     load();
-  }, [user?.id]);
+  }, [user?.id, user?.gender]);
 
   const toggleSymptom = (s) => {
     setForm((f) => ({
@@ -104,6 +107,10 @@ export default function Dashboard() {
     setMsg('Doctor assigned.');
   };
 
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
   if (user?.role === 'doctor') {
     return (
       <div>
@@ -128,26 +135,62 @@ export default function Dashboard() {
       <div>
         <h1 className="font-display text-3xl text-ink-900 mb-1">Hello {user?.firstName}</h1>
         <p className="text-ink-500">
-          Predictive tracking dashboard — cycle, ovulation and alert signals.
+          {isMan
+            ? 'Men’s health hub — daily suivi, training recovery, diabetes & AI Coach.'
+            : 'Women’s health hub — cycle tracking, daily suivi, diabetes & AI Coach.'}
         </p>
       </div>
 
-      <Link
-        to="/ai"
-        className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-rose-600 to-rose-800 text-white rounded-2xl px-5 py-4 shadow-md hover:shadow-lg transition"
-      >
-        <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6" />
+      <div className="grid sm:grid-cols-2 gap-3">
+        <Link
+          to="/suivi"
+          className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-br from-ink-900 to-rose-800 text-white rounded-2xl px-5 py-4 hover:opacity-95 transition"
+        >
           <div>
-            <p className="font-display text-lg">MyHeath AI is ready</p>
-            <p className="text-sm text-rose-100">
-              Claude chat · natural-language journal · doctor brief · daily plan
-            </p>
+            <p className="font-display text-lg">Daily health suivi</p>
+            <p className="text-sm text-rose-100">Save each day · predict good health</p>
           </div>
-        </div>
-        <span className="text-sm font-medium bg-white/20 px-3 py-1.5 rounded-lg">Open →</span>
-      </Link>
+          <span className="text-sm font-medium">Open →</span>
+        </Link>
+        <Link
+          to="/ai"
+          className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-rose-600 to-rose-800 text-white rounded-2xl px-5 py-4 shadow-md hover:shadow-lg transition"
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-6 h-6" />
+            <div>
+              <p className="font-display text-lg">AI Coach</p>
+              <p className="text-sm text-rose-100">Personalized for {isMan ? 'men' : 'women'}</p>
+            </div>
+          </div>
+          <span className="text-sm font-medium bg-white/20 px-3 py-1.5 rounded-lg">Open →</span>
+        </Link>
+        {!isMan && (
+          <Link
+            to="/period"
+            className="flex flex-wrap items-center justify-between gap-3 bg-white/80 border border-rose-200 text-ink-900 rounded-2xl px-5 py-4 hover:bg-rose-50/80 transition"
+          >
+            <div>
+              <p className="font-display text-lg text-rose-800">Period management</p>
+              <p className="text-sm text-ink-500">Calendar, flow, fertile window</p>
+            </div>
+            <span className="text-sm font-medium text-rose-700">Open →</span>
+          </Link>
+        )}
+        <Link
+          to="/diabetes"
+          className="flex flex-wrap items-center justify-between gap-3 bg-white/80 border border-rose-200 text-ink-900 rounded-2xl px-5 py-4 hover:bg-rose-50/80 transition"
+        >
+          <div>
+            <p className="font-display text-lg text-rose-800">Diabetes care</p>
+            <p className="text-sm text-ink-500">Glucose logs & adherence</p>
+          </div>
+          <span className="text-sm font-medium text-rose-700">Open →</span>
+        </Link>
+      </div>
 
+      {!isMan && (
+      <>
       {loading ? (
         <p className="text-ink-500">Analyzing…</p>
       ) : (
@@ -259,8 +302,11 @@ export default function Dashboard() {
           </div>
         </>
       )}
+      </>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
+        {!isMan && (
         <form
           onSubmit={submitLog}
           className="bg-white/70 border border-rose-100 rounded-2xl p-5 space-y-4"
@@ -329,8 +375,9 @@ export default function Dashboard() {
           </button>
           {msg && <p className="text-sm text-ink-500">{msg}</p>}
         </form>
+        )}
 
-        <div className="bg-white/70 border border-rose-100 rounded-2xl p-5">
+        <div className={`bg-white/70 border border-rose-100 rounded-2xl p-5 ${isMan ? 'lg:col-span-2 max-w-xl' : ''}`}>
           <h2 className="font-display text-xl mb-3">My doctor</h2>
           {user?.assignedDoctor ? (
             <p className="text-sm text-ink-500">

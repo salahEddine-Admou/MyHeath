@@ -15,7 +15,8 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { firstName, lastName, email, password, role, phone, specialty } = req.body;
+    const { firstName, lastName, email, password, role, phone, specialty, gender, hasDiabetes, diabetesType } =
+      req.body;
 
     const exists = await User.findOne({ email: email.toLowerCase() });
     if (exists) {
@@ -24,6 +25,7 @@ exports.register = async (req, res) => {
 
     const allowedRoles = ['patient', 'doctor'];
     const safeRole = allowedRoles.includes(role) ? role : 'patient';
+    const safeGender = gender === 'man' ? 'man' : 'woman';
 
     const user = await User.create({
       firstName,
@@ -31,8 +33,14 @@ exports.register = async (req, res) => {
       email,
       password,
       role: safeRole,
+      gender: safeGender,
+      hasDiabetes: Boolean(hasDiabetes),
+      diabetesType: hasDiabetes ? diabetesType || 'type2' : 'none',
       phone: phone || '',
-      specialty: safeRole === 'doctor' ? specialty || 'Gynecology' : '',
+      specialty:
+        safeRole === 'doctor'
+          ? specialty || (safeGender === 'man' ? 'General medicine' : 'Gynecology')
+          : '',
     });
 
     if (user.role === 'patient') {
@@ -95,5 +103,24 @@ exports.assignDoctor = async (req, res) => {
     res.json({ user: req.user.toSafeJSON() });
   } catch (error) {
     res.status(500).json({ message: 'Failed to assign doctor' });
+  }
+};
+
+exports.listUsers = async (_req, res) => {
+  try {
+    const users = await User.find({ isActive: true })
+      .select('firstName lastName email role gender specialty hasDiabetes createdAt')
+      .sort({ role: 1, lastName: 1 });
+
+    const counts = {
+      total: users.length,
+      admin: users.filter((u) => u.role === 'admin').length,
+      doctor: users.filter((u) => u.role === 'doctor').length,
+      patient: users.filter((u) => u.role === 'patient').length,
+    };
+
+    res.json({ counts, users });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load users' });
   }
 };

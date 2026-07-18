@@ -28,11 +28,11 @@ export default function Landing() {
             MyHeath
           </p>
           <h1 className="text-xl md:text-2xl text-ink-700 mb-6 max-w-lg">
-            Smart telemedicine, predictive tracking, and MyHeath AI — health support that feels next-level.
+            Health tracking for women and men — periods, daily suivi, diabetes and AI Coach.
           </h1>
           <p className="text-ink-500 mb-8 max-w-md leading-relaxed">
-            Natural-language symptom journal, insight explanations, doctor briefs and daily wellness
-            plans powered by Claude. Sensitive data encrypted with AES-256.
+            Choose your profile at signup. Save each day to predict good-health signals. Encrypted
+            records, telemedicine chat, Claude-powered coaching.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link

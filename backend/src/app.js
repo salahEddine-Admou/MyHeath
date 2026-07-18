@@ -7,6 +7,8 @@ const authRoutes = require('./routes/auth.routes');
 const healthRoutes = require('./routes/health.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
+const suiviRoutes = require('./routes/suivi.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
@@ -52,6 +54,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/suivi', suiviRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

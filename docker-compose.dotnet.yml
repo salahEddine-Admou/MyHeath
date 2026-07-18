@@ -1,0 +1,53 @@
+# MyHeath stack with ASP.NET Core 8 API (instead of Node)
+# Usage: docker compose -f docker-compose.dotnet.yml up --build
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: myheath-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data_dotnet:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: myheath
+
+  backend-dotnet:
+    build:
+      context: ./backend-dotnet
+      dockerfile: Dockerfile
+    container_name: myheath-api-dotnet
+    restart: unless-stopped
+    ports:
+      - "5080:5080"
+    environment:
+      PORT: 5080
+      ASPNETCORE_ENVIRONMENT: Production
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: myheath
+      JWT_SECRET: ${JWT_SECRET:-myheath_jwt_secret_change_me}
+      AES_SECRET_KEY: ${AES_SECRET_KEY:-0123456789abcdef0123456789abcdef}
+      CLIENT_URL: http://localhost:5173,https://heracare.vercel.app
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    container_name: myheath-frontend-dotnet
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5080/api
+      VITE_SOCKET_URL: http://localhost:5080
+    depends_on:
+      - backend-dotnet
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  mongo_data_dotnet:

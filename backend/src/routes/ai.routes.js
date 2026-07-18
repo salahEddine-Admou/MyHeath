@@ -8,6 +8,7 @@ router.use(protect);
 router.use(authorize('patient', 'doctor', 'admin'));
 
 router.post('/chat', aiController.chat);
+router.post('/coach-plan', authorize('patient'), aiController.coachPlan);
 router.post('/explain-insights', authorize('patient'), aiController.explainInsights);
 router.post('/parse-symptoms', authorize('patient'), aiController.parseSymptoms);
 router.post('/doctor-brief', authorize('patient'), aiController.doctorBrief);

@@ -6,9 +6,15 @@ build/
 .env.*.local
 backend/.env
 frontend/.env
+backend-dotnet/**/bin/
+backend-dotnet/**/obj/
+backend-dotnet/**/.vs/
+*.user
 *.log
 .DS_Store
 coverage/
 .vite/
 mongo_data/
+mongo_data_dotnet/
 .vercel
+*.swp

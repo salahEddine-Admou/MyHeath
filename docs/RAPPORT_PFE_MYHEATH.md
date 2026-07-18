@@ -1,17 +1,34 @@
-# MyHeath — Thesis excerpts (English)
+# MyHeath — Full PFE Report
 
-**Title:** Design and implementation of an intelligent telemedicine and women's health tracking platform — *MyHeath*
+The complete academic report (**55 pages**) is here:
 
-## Abstract
+- **PDF:** [`RAPPORT_PFE_MYHEATH.pdf`](./RAPPORT_PFE_MYHEATH.pdf)
 
-MyHeath is a FemTech telemedicine web platform with predictive menstrual-cycle tracking, an AES-256 encrypted shared medical record, secure patient–doctor messaging, and a Claude-powered health assistant (MyHeath AI). Built on the MERN stack with Docker orchestration and Vercel deployment.
+## Contents overview
 
-**Keywords:** FemTech, telemedicine, MERN, AES-256, Claude AI, predictive analytics
+1. Cover, Dedication, Acknowledgments  
+2. Abstract (EN) / Résumé (FR)  
+3. Table of Contents, List of Figures & Tables  
+4. General Introduction  
+5. **Chapter 1** — Preliminary study & requirements  
+6. **Chapter 2** — Architecture, UML, MongoDB, AES-256, predictive engine, AI design  
+7. **Chapter 3** — Implementation (Auth, Health, Chat, Crypto, Analyzer, MyHeath AI, Frontend)  
+8. **Chapter 4** — Testing & Vercel/Atlas deployment  
+9. Conclusion & perspectives  
+10. Bibliography + Annexes A–K  
 
-## Architecture
+## UML / architecture figures
 
-3-tier MERN: React/Vite frontend (Vercel) · Express API (Vercel serverless) · MongoDB Atlas. Sensitive fields encrypted AES-256-CBC at rest. Predictive engine flags irregular cycles and severe pain. MyHeath AI provides chat, NL journaling, doctor briefs and wellness plans.
+High-resolution PNGs are in `docs/figures/` and embedded in the PDF:
 
-## Author
+- Use case, sequence (login / insights), class diagram
+- 3-tier architecture, deployment, AES pipeline, predictive flowchart, AI pipeline
 
-Salaheddine Admo — salaheddine.admo@gmail.com — 2025/2026
+## Regenerate
+
+```bash
+python scripts/generate_uml_figures.py
+python scripts/generate_rapport_55.py
+```
+
+**Author:** Salaheddine Admo — salaheddine.admo@gmail.com — 2025/2026

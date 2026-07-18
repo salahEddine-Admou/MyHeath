@@ -1,0 +1,29 @@
+================================================================================
+  MyHeath — Quick start for the professor / jury
+================================================================================
+
+1) Clone
+   git clone https://github.com/salahEddine-Admou/MyHeath.git
+   cd MyHeath
+
+2) Easiest run (Docker Desktop must be running)
+   docker compose -f docker-compose.dotnet.yml up --build
+
+3) Open in browser
+   App:     http://localhost:5173
+   API:     http://localhost:5080/api/healthcheck
+   Swagger: http://localhost:5080/swagger
+
+4) Login demos
+   Admin:   admin@myheath.app   / Admin123
+   Doctor:  doctor@myheath.app  / Doctor123
+   Patient: patient@myheath.app / Patient123
+
+5) Read the thesis PDF
+   docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf   (.NET version — main)
+   docs/RAPPORT_PFE_MYHEATH.pdf          (Node/MERN version)
+
+Full steps (Windows/Mac/Linux, with or without Docker):
+   GUIDE_INSTALLATION.md
+
+================================================================================

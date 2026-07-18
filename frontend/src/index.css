@@ -24,3 +24,42 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Period management motion */
+.period-page .period-ring {
+  animation: period-float 4.5s ease-in-out infinite;
+}
+
+.period-page .period-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.period-page .period-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(201, 45, 85, 0.2);
+}
+
+.period-page .period-row {
+  animation: period-fade-up 0.45s ease both;
+}
+
+@keyframes period-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes period-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
