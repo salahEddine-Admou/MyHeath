@@ -211,14 +211,17 @@ Sans clé Anthropic, le reste de l’application fonctionne. Pour activer le coa
 
 ---
 
-## 12. Contact / auteur
+## 12. Auteur et encadrant
 
-**Réalisatrice :** Nezha Fekoussa  
+| | |
+|--|--|
+| **Réalisatrice** | Nezha Fekoussa |
+| **Encadrant** | Salah Eddine Admou |
 
 Projet académique **MyHeath** — PFE télémedecine & santé connectée  
 Stack : **ASP.NET Core 8 · React · MongoDB · Docker** (+ backend Node optionnel)
 
-Rapports : `docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf` (FR) · `docs/RAPPORT_PFE_MYHEATH_DOTNET_EN.pdf` (EN)  
-Page de garde : `Page de garde.docx`
+Rapports complets (page de garde PDF incluse) :  
+`docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf` (FR) · `docs/RAPPORT_PFE_MYHEATH_DOTNET_EN.pdf` (EN)
 
 Merci de commencer par **`GUIDE_INSTALLATION.md`** puis le PDF dans `docs/`.

@@ -79,7 +79,8 @@ def arrow(ax, x1, y1, x2, y2, label="", lw=2.6):
 
 
 def title(ax, text):
-    ax.set_title(text, fontsize=15, color=NAVY, weight="bold", pad=16, loc="left")
+    # Extra pad so the title never overlaps the first row of boxes
+    ax.set_title(text, fontsize=15, color=NAVY, weight="bold", pad=28, loc="left")
 
 
 def fig_architecture():
@@ -147,19 +148,21 @@ def fig_deployment():
 
 
 def fig_usecase():
-    fig, ax = plt.subplots(figsize=(14, 9))
+    fig, ax = plt.subplots(figsize=(14, 11))
     ax.set_xlim(0, 14)
-    ax.set_ylim(0, 9)
+    ax.set_ylim(0, 11)
     ax.axis("off")
     title(ax, "Figure 2.3 — Diagramme de cas d'utilisation")
 
+    # System label well above the dashed boundary
+    ax.text(7.0, 10.05, "Systeme MyHeath", ha="center", fontsize=13, color=NAVY, weight="bold")
+
     boundary = FancyBboxPatch(
-        (3.2, 0.4), 7.6, 8.0,
+        (3.3, 0.5), 7.4, 8.9,
         boxstyle="round,pad=0.02,rounding_size=0.15",
         linewidth=2.2, edgecolor=NAVY, facecolor=SOFT, linestyle="--",
     )
     ax.add_patch(boundary)
-    ax.text(7.0, 8.1, "Systeme MyHeath", ha="center", fontsize=13, color=NAVY, weight="bold")
 
     def actor(x, y, label):
         ax.add_patch(Circle((x, y + 0.7), 0.28, fill=False, edgecolor=TEXT, lw=2.2))
@@ -169,27 +172,38 @@ def fig_usecase():
         ax.plot([x, x + 0.25], [y - 0.05, y - 0.45], color=TEXT, lw=2.2)
         ax.text(x, y - 0.75, label, ha="center", fontsize=11, weight="bold", color=TEXT)
 
-    actor(1.3, 6.5, "Patient")
-    actor(1.3, 3.2, "Medecin")
-    actor(12.7, 5.0, "Admin")
+    actor(1.2, 7.4, "Patient")
+    actor(1.2, 3.4, "Medecin")
+    actor(12.8, 3.4, "Admin")
 
+    # Two clean columns — no crossing lines through boxes
     cases = [
-        (4.0, 7.0, "Suivi quotidien"),
-        (7.2, 7.0, "Gestion periodes"),
-        (4.0, 5.5, "Diabete / glycemie"),
-        (7.2, 5.5, "Coach IA Claude"),
-        (4.0, 4.0, "Dossier chiffre"),
-        (7.2, 4.0, "Messagerie / RDV"),
-        (5.5, 2.5, "Console admin\nUsers · Plans · Audit"),
+        (3.7, 7.7, 2.9, 1.4, "Suivi quotidien"),
+        (7.4, 7.7, 2.9, 1.4, "Gestion periodes"),
+        (3.7, 5.9, 2.9, 1.4, "Diabete / glycemie"),
+        (7.4, 5.9, 2.9, 1.4, "Coach IA Claude"),
+        (3.7, 4.1, 2.9, 1.4, "Dossier chiffre"),
+        (7.4, 4.1, 2.9, 1.4, "Messagerie / RDV"),
+        (4.55, 1.4, 4.6, 1.85, "Console admin\nUsers · Plans · Audit"),
     ]
-    for x, y, t in cases:
-        box(ax, x, y, 2.6, 1.1, t, fc=WHITE, ec=TEAL, fs=10, radius=0.35)
+    for x, y, w, h, t in cases:
+        box(ax, x, y, w, h, t, fc=WHITE, ec=TEAL, fs=11, radius=0.35)
 
-    # associations
-    for y in (7.5, 6.0, 4.5, 3.0):
-        ax.plot([1.7, 4.0], [y, y], color=ARROW, lw=1.8)
-    ax.plot([1.7, 4.0], [3.5, 4.5], color=ARROW, lw=1.8)
-    ax.plot([12.2, 8.1], [5.2, 3.0], color=ARROW, lw=1.8)
+    # Patient -> all six use cases via short stubs to nearest edge (no crossings)
+    for yc in (8.4, 6.6, 4.8):
+        ax.plot([1.6, 3.7], [yc, yc], color=ARROW, lw=1.8)
+    for yc, xt in ((8.4, 7.4), (6.6, 7.4), (4.8, 7.4)):
+        ax.annotate(
+            "",
+            xy=(xt, yc), xytext=(1.6, yc - 0.35 if yc < 8 else yc + 0.35),
+            arrowprops=dict(arrowstyle="-", color=ARROW, lw=1.5,
+                            connectionstyle="arc3,rad=0.25"),
+        )
+    # Doctor -> dossier + messaging only
+    ax.plot([1.6, 3.7], [3.7, 4.8], color=ARROW, lw=1.8)
+    ax.plot([1.6, 7.4], [3.3, 4.8], color=ARROW, lw=1.8)
+    # Admin -> console
+    ax.plot([12.3, 9.15], [3.5, 2.3], color=ARROW, lw=1.8)
     save(fig, "fig_2_3_usecase.png")
 
 
@@ -283,23 +297,91 @@ def fig_aes():
 
 
 def fig_predictive():
-    fig, ax = plt.subplots(figsize=(14, 6.5))
-    ax.set_xlim(0, 14)
-    ax.set_ylim(0, 6.5)
+    """Complete dual pipeline: wellness score + cycle analysis (not a single linear chain)."""
+    fig, ax = plt.subplots(figsize=(16, 12.2))
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 12.2)
     ax.axis("off")
-    title(ax, "Figure 2.8 — Pipeline score sante & analyse de cycle")
+    title(ax, "Figure 2.8 — Pipelines predictifs MyHeath (score sante + cycle)")
 
-    steps = [
-        (0.4, "Journal\nquotidien"),
-        (3.2, "Features\nsommeil, stress\nglycemie..."),
-        (6.2, "HealthScore\nService\n0 — 100"),
-        (9.2, "Cycle\nAnalyzer\nanomalies"),
-        (11.8, "Dashboard\n+ Alertes"),
-    ]
-    for i, (x, t) in enumerate(steps):
-        box(ax, x, 2.2, 2.4, 2.6, t, fc=FILL_ACCENT if i % 2 == 0 else FILL_TEAL, fs=11)
-        if i < len(steps) - 1:
-            arrow(ax, x + 2.4, 3.5, steps[i + 1][0], 3.5)
+    # Shared inputs
+    box(ax, 0.35, 4.2, 2.7, 2.4,
+        "Profil User\ngender · diabete\ndoctorId",
+        fc=SOFT, ec=NAVY, fs=10)
+    box(ax, 0.35, 7.55, 2.7, 2.5,
+        "React Dashboard\nSuivi / Period\nformulaire patient",
+        fc=FILL_ACCENT, fs=10)
+
+    # Lane labels with breathing room above content boxes
+    ax.text(8.2, 11.35, "Pipeline A — Score bien-etre (HealthScoreService)",
+            ha="center", fontsize=11, color=TEAL, weight="bold")
+    ax.text(8.2, 5.05, "Pipeline B — Analyse de cycle (CycleAnalyzer)",
+            ha="center", fontsize=11, color=NAVY, weight="bold")
+
+    # --- Pipeline A ---
+    ya, ha = 7.55, 2.5
+    box(ax, 3.5, ya, 2.7, ha,
+        "POST /api/suivi/daily\nupsert journal\nDailyHealthLog",
+        fc=WHITE, fs=10)
+    box(ax, 6.55, ya, 2.8, ha,
+        "Features\nsommeil · stress\nhumeur · activite\nglycemie · eau",
+        fc=FILL_TEAL, fs=10)
+    box(ax, 9.7, ya, 2.9, ha,
+        "HealthScoreService\npoids selon profil\n(F/H + diabete)\nscore 0—100 + label",
+        fc=FILL_ACCENT, fs=9.5)
+    box(ax, 12.95, ya, 2.7, ha,
+        "Sorties A\nexcellent / good /...\ncourbes Recharts\nalerte si faible",
+        fc=WHITE, fs=10)
+
+    mid_y = ya + ha / 2
+    arrow(ax, 3.05, mid_y, 3.5, mid_y)
+    arrow(ax, 6.2, mid_y, 6.55, mid_y)
+    arrow(ax, 9.35, mid_y, 9.7, mid_y)
+    arrow(ax, 12.6, mid_y, 12.95, mid_y)
+    ax.annotate(
+        "",
+        xy=(11.15, ya), xytext=(1.7, 6.6),
+        arrowprops=dict(arrowstyle="-|>", color=TEAL, lw=2.0, mutation_scale=14,
+                        connectionstyle="arc3,rad=-0.12"),
+        zorder=1,
+    )
+    ax.text(5.4, 6.9, "poids profil", fontsize=9, color=TEAL, style="italic")
+
+    # Mongo mid — tall enough for comfortable padding
+    box(ax, 4.6, 5.2, 6.8, 1.85,
+        "MongoDB\n\ndailyhealthlogs  ·  symptomlogs  ·  users",
+        fc=FILL, ec=BORDER, fs=11)
+
+    arrow(ax, 8.0, ya, 8.0, 7.05)
+    arrow(ax, 8.0, 5.2, 8.0, 4.2)
+
+    # --- Pipeline B (bottom) — larger boxes, especially insights ---
+    box(ax, 3.5, 1.55, 2.7, 2.55,
+        "POST / GET\nperiods &\nsymptomlogs\ndates + douleur",
+        fc=WHITE, fs=10)
+    box(ax, 6.55, 1.55, 2.8, 2.55,
+        "GET /api/health/insights\n\nhistorique trie\npar date",
+        fc=FILL_TEAL, fs=10)
+    box(ax, 9.7, 1.55, 2.9, 2.55,
+        "CycleAnalyzer\nmoyenne · ovulation\nphase · anomalies\n(irregularite, douleur)",
+        fc=FILL_ACCENT, fs=9.5)
+    box(ax, 12.95, 1.55, 2.7, 2.55,
+        "Sorties B\nprochaine regle\nfenetre fertile\nrecommendConsultation",
+        fc=WHITE, fs=9.5)
+
+    arrow(ax, 3.05, 2.8, 3.5, 2.8)
+    arrow(ax, 6.2, 2.8, 6.55, 2.8)
+    arrow(ax, 9.35, 2.8, 9.7, 2.8)
+    arrow(ax, 12.6, 2.8, 12.95, 2.8)
+    arrow(ax, 1.7, 4.35, 1.7, 3.2)
+    ax.text(2.0, 3.7, "saisie\ncycle", fontsize=8, color=MUTED)
+
+    ax.text(
+        8.0, 0.45,
+        "Deux moteurs deterministes (regles explicables) — pas de ML opaque  |  "
+        "Stockage Mongo puis restitution Dashboard / alertes",
+        ha="center", fontsize=10, color=MUTED, style="italic",
+    )
     save(fig, "fig_2_8_predictive.png")
 
 

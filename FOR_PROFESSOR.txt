@@ -19,11 +19,10 @@
    Doctor:  doctor@myheath.app  / Doctor123
    Patient: patient@myheath.app / Patient123
 
-5) Read the thesis PDF
+5) Read the thesis PDF (cover page included inside the PDF)
    docs/RAPPORT_PFE_MYHEATH_DOTNET.pdf      (.NET — French)
    docs/RAPPORT_PFE_MYHEATH_DOTNET_EN.pdf   (.NET — English)
-   docs/RAPPORT_PFE_MYHEATH.pdf             (Node/MERN — English)
-   Page de garde.docx                       (ENSET cover — author Nezha Fekoussa)
+   Author: Nezha Fekoussa  |  Supervisor: Salah Eddine Admou
 
 Full steps (Windows/Mac/Linux, with or without Docker):
    GUIDE_INSTALLATION.md
